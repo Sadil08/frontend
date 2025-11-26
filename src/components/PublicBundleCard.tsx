@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { PaperBundleDto } from '@/types';
+import { PaperBundleSummaryDto } from '@/types';
 
 /**
  * Props for PublicBundleCard component
  */
 interface PublicBundleCardProps {
     /** Public bundle data */
-    bundle: PaperBundleDto;
+    bundle: PaperBundleSummaryDto;
 }
 
 /**

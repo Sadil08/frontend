@@ -2,70 +2,229 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, Spin, Tabs, message, Button } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Card, Descriptions, Spin, Alert, Button, Table, Tag, Modal, Form, Select, Input, message } from 'antd';
+import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
+import { AdminUserDto, UserBundleAccessDto, UserAttemptInfoDto, AdminBundleDto } from '@/types/admin';
 import Header from '@/components/Header';
-import { ListTable } from '@/components/ListTable';
 
 export default function UserDetailPage() {
-    const { id } = useParams();
+    const params = useParams();
     const router = useRouter();
-    const [user, setUser] = useState<any>(null);
+    const userId = Number(params.id);
+    const [user, setUser] = useState<AdminUserDto | null>(null);
+    const [bundles, setBundles] = useState<UserBundleAccessDto[]>([]);
+    const [attempts, setAttempts] = useState<UserAttemptInfoDto[]>([]);
+    const [availableBundles, setAvailableBundles] = useState<AdminBundleDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isGrantModalOpen, setIsGrantModalOpen] = useState(false);
+    const [isAttemptModalOpen, setIsAttemptModalOpen] = useState(false);
+    const [selectedAttempt, setSelectedAttempt] = useState<UserAttemptInfoDto | null>(null);
+    const [grantForm] = Form.useForm();
+    const [attemptForm] = Form.useForm();
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [userData, bundlesData, attemptsData, allBundles] = await Promise.all([
+                adminService.getUser(userId),
+                adminService.getUserBundles(userId),
+                adminService.getUserAttempts(userId),
+                adminService.getBundles()
+            ]);
+            setUser(userData);
+            setBundles(bundlesData);
+            setAttempts(attemptsData);
+            setAvailableBundles(allBundles);
+        } catch (err) {
+            console.error('Failed to load user data:', err);
+            setError('Failed to load user data');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const fetchUser = async () => {
-            try {
-                const data = await adminService.getUserDetails(Number(id));
-                setUser(data);
-            } catch (error) {
-                message.error('Failed to load user details');
-            } finally {
-                setLoading(false);
+        fetchData();
+    }, [userId]);
+
+    const handleGrantAccess = async (values: any) => {
+        try {
+            await adminService.grantBundleAccess(userId, {
+                userId,
+                bundleId: values.bundleId,
+                reason: values.reason
+            });
+            message.success('Bundle access granted successfully');
+            setIsGrantModalOpen(false);
+            grantForm.resetFields();
+            fetchData();
+        } catch (error) {
+            console.error('Failed to grant access:', error);
+            message.error('Failed to grant bundle access');
+        }
+    };
+
+    const handleRevokeAccess = (access: UserBundleAccessDto) => {
+        Modal.confirm({
+            title: 'Revoke Bundle Access',
+            content: `Are you sure you want to revoke access to "${access.bundleName}"?`,
+            okText: 'Revoke',
+            okType: 'danger',
+            onOk: async () => {
+                try {
+                    await adminService.revokeBundleAccess(userId, access.bundleId);
+                    message.success('Bundle access revoked successfully');
+                    fetchData();
+                } catch (error) {
+                    console.error('Failed to revoke access:', error);
+                    message.error('Failed to revoke bundle access');
+                }
             }
-        };
-        if (id) fetchUser();
-    }, [id]);
+        });
+    };
 
-    if (loading) return <div className="flex justify-center p-12"><Spin size="large" /></div>;
-    if (!user) return <div className="p-12 text-center">User not found</div>;
+    const handleUpdateAttemptLimit = async (values: any) => {
+        if (!selectedAttempt) return;
 
-    const items = [
+        try {
+            await adminService.updateAttemptLimit(userId, selectedAttempt.paperId, {
+                userId,
+                paperId: selectedAttempt.paperId,
+                maxFreeAttempts: values.maxFreeAttempts
+            });
+            message.success('Attempt limit updated successfully');
+            setIsAttemptModalOpen(false);
+            attemptForm.resetFields();
+            setSelectedAttempt(null);
+            fetchData();
+        } catch (error) {
+            console.error('Failed to update attempt limit:', error);
+            message.error('Failed to update attempt limit');
+        }
+    };
+
+    const openAttemptModal = (attempt: UserAttemptInfoDto) => {
+        setSelectedAttempt(attempt);
+        attemptForm.setFieldsValue({
+            maxFreeAttempts: attempt.maxFreeAttempts
+        });
+        setIsAttemptModalOpen(true);
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <Header />
+                <div className="max-w-7xl mx-auto p-6 flex justify-center items-center" style={{ minHeight: '60vh' }}>
+                    <Spin size="large" />
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !user) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <Header />
+                <div className="max-w-7xl mx-auto p-6">
+                    <Alert
+                        message="Error"
+                        description={error || 'User not found'}
+                        type="error"
+                        showIcon
+                    />
+                    <Button onClick={() => router.back()} className="mt-4">
+                        Go Back
+                    </Button>
+                </div>
+            </div>
+        );
+    }
+
+    const bundleColumns = [
         {
-            key: '1',
-            label: 'Accessed Bundles',
-            children: <ListTable
-                data={user.accessedBundles || []}
-                columns={[
-                    { title: 'Bundle Name', dataIndex: 'name', key: 'name' },
-                    { title: 'Price', dataIndex: 'price', key: 'price', render: (val: number) => `$${val}` },
-                ]}
-            />,
+            title: 'Bundle Name',
+            dataIndex: 'bundleName',
+            key: 'bundleName'
         },
         {
-            key: '2',
-            label: 'Attempted Papers',
-            children: <ListTable
-                data={user.attemptedPapers || []}
-                columns={[
-                    { title: 'Paper ID', dataIndex: 'paperId', key: 'paperId' },
-                    { title: 'Status', dataIndex: 'status', key: 'status' },
-                    { title: 'Score', dataIndex: 'score', key: 'score' }, // Assuming score is in attempt dto or needs join
-                ]}
-            />,
+            title: 'Purchased At',
+            dataIndex: 'purchasedAt',
+            key: 'purchasedAt',
+            render: (date: string) => new Date(date).toLocaleString()
         },
         {
-            key: '3',
-            label: 'Progress',
-            children: <ListTable
-                data={user.progress || []}
-                columns={[
-                    { title: 'Paper ID', dataIndex: 'paperId', key: 'paperId' },
-                    { title: 'Completion', dataIndex: 'completionPercentage', key: 'completionPercentage', render: (val: number) => `${val}%` },
-                ]}
-            />,
+            title: 'Source',
+            key: 'source',
+            render: (_: any, record: UserBundleAccessDto) => (
+                record.grantedByAdmin ? (
+                    <Tag color="orange">Admin Grant</Tag>
+                ) : (
+                    <Tag color="green">Purchase</Tag>
+                )
+            )
         },
+        {
+            title: 'Grant Reason',
+            dataIndex: 'grantReason',
+            key: 'grantReason',
+            render: (reason: string | null) => reason || '-'
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_: any, record: UserBundleAccessDto) => (
+                <Button
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleRevokeAccess(record)}
+                >
+                    Revoke
+                </Button>
+            )
+        }
+    ];
+
+    const attemptColumns = [
+        {
+            title: 'Paper Name',
+            dataIndex: 'paperName',
+            key: 'paperName'
+        },
+        {
+            title: 'Attempts Made',
+            dataIndex: 'attemptsMade',
+            key: 'attemptsMade'
+        },
+        {
+            title: 'Max Attempts',
+            dataIndex: 'maxFreeAttempts',
+            key: 'maxFreeAttempts'
+        },
+        {
+            title: 'Remaining',
+            dataIndex: 'remainingAttempts',
+            key: 'remainingAttempts',
+            render: (remaining: number) => (
+                <Tag color={remaining > 0 ? 'green' : 'red'}>{remaining}</Tag>
+            )
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            render: (_: any, record: UserAttemptInfoDto) => (
+                <Button
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => openAttemptModal(record)}
+                >
+                    Update Limit
+                </Button>
+            )
+        }
     ];
 
     return (
@@ -73,25 +232,131 @@ export default function UserDetailPage() {
             <Header />
             <div className="max-w-7xl mx-auto p-6">
                 <Button
-                    type="text"
                     icon={<ArrowLeftOutlined />}
-                    onClick={() => router.back()}
+                    onClick={() => router.push('/admin/users')}
                     className="mb-4"
                 >
-                    Back
+                    Back to Users
                 </Button>
 
-                <Card className="mb-6 shadow-sm">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-2">{user.username}</h1>
-                    <p className="text-gray-600">{user.email}</p>
-                    <div className="mt-2">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">{user.role}</span>
-                    </div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-6">User Details</h1>
+
+                {/* User Info */}
+                <Card title="User Information" className="mb-6">
+                    <Descriptions bordered column={2}>
+                        <Descriptions.Item label="ID">{user.id}</Descriptions.Item>
+                        <Descriptions.Item label="Username">{user.username}</Descriptions.Item>
+                        <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                        <Descriptions.Item label="Role">
+                            <Tag color={user.role === 'ADMIN' ? 'red' : 'blue'}>{user.role}</Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Total Bundles">{user.totalBundlesPurchased}</Descriptions.Item>
+                        <Descriptions.Item label="Total Attempts">{user.totalAttempts}</Descriptions.Item>
+                        <Descriptions.Item label="Created At" span={2}>
+                            {new Date(user.createdAt).toLocaleString()}
+                        </Descriptions.Item>
+                    </Descriptions>
                 </Card>
 
-                <Card className="shadow-sm">
-                    <Tabs defaultActiveKey="1" items={items} />
+                {/* Bundle Access */}
+                <Card
+                    title="Bundle Access"
+                    extra={
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsGrantModalOpen(true)}
+                        >
+                            Grant Access
+                        </Button>
+                    }
+                    className="mb-6"
+                >
+                    <Table
+                        dataSource={bundles}
+                        columns={bundleColumns}
+                        rowKey="accessId"
+                        pagination={false}
+                    />
                 </Card>
+
+                {/* Attempt Summary */}
+                <Card title="Attempt Summary" className="mb-6">
+                    <Table
+                        dataSource={attempts}
+                        columns={attemptColumns}
+                        rowKey="paperId"
+                        pagination={false}
+                    />
+                </Card>
+
+                {/* Grant Access Modal */}
+                <Modal
+                    title="Grant Bundle Access"
+                    open={isGrantModalOpen}
+                    onCancel={() => {
+                        setIsGrantModalOpen(false);
+                        grantForm.resetFields();
+                    }}
+                    onOk={() => grantForm.submit()}
+                >
+                    <Form form={grantForm} layout="vertical" onFinish={handleGrantAccess}>
+                        <Form.Item
+                            name="bundleId"
+                            label="Select Bundle"
+                            rules={[{ required: true, message: 'Please select a bundle' }]}
+                        >
+                            <Select placeholder="Select bundle">
+                                {availableBundles
+                                    .filter(b => !bundles.some(ub => ub.bundleId === b.id))
+                                    .map(bundle => (
+                                        <Select.Option key={bundle.id} value={bundle.id}>
+                                            {bundle.name} (${bundle.price})
+                                        </Select.Option>
+                                    ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="reason"
+                            label="Reason"
+                            rules={[{ required: true, message: 'Please provide a reason' }]}
+                        >
+                            <Input.TextArea rows={3} placeholder="e.g., Scholarship program - top performer" />
+                        </Form.Item>
+                    </Form>
+                </Modal>
+
+                {/* Update Attempt Limit Modal */}
+                <Modal
+                    title="Update Attempt Limit"
+                    open={isAttemptModalOpen}
+                    onCancel={() => {
+                        setIsAttemptModalOpen(false);
+                        attemptForm.resetFields();
+                        setSelectedAttempt(null);
+                    }}
+                    onOk={() => attemptForm.submit()}
+                >
+                    {selectedAttempt && (
+                        <>
+                            <p className="mb-4">
+                                Paper: <strong>{selectedAttempt.paperName}</strong>
+                            </p>
+                            <p className="mb-4">
+                                Current: {selectedAttempt.attemptsMade} / {selectedAttempt.maxFreeAttempts} attempts
+                            </p>
+                            <Form form={attemptForm} layout="vertical" onFinish={handleUpdateAttemptLimit}>
+                                <Form.Item
+                                    name="maxFreeAttempts"
+                                    label="New Maximum Attempts"
+                                    rules={[{ required: true, message: 'Please enter max attempts' }]}
+                                >
+                                    <Input type="number" min={0} />
+                                </Form.Item>
+                            </Form>
+                        </>
+                    )}
+                </Modal>
             </div>
         </div>
     );

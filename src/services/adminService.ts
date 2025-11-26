@@ -1,107 +1,316 @@
-import axios from 'axios';
+import apiClient from '@/utils/apiClient';
+import {
+    SystemStatsDto,
+    AdminBundleDto,
+    BundleStatsDto,
+    BundleCreateDto,
+    AdminPaperDto,
+    PaperCreateDto,
+    QuestionCreateDto,
+    AdminUserDto,
+    UserBundleAccessDto,
+    UserAttemptInfoDto,
+    GrantBundleAccessDto,
+    UpdateAttemptLimitDto
+} from '@/types/admin';
+import { SubjectDto, LessonDto } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-
-const getAuthHeader = () => {
-    const token = localStorage.getItem('token');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-};
-
+/**
+ * Admin Service
+ * Handles all admin management operations including system statistics,
+ * bundle/paper/user CRUD, and advanced features like access grants and attempt limits
+ * 
+ * All endpoints require ADMIN role authentication
+ */
 export const adminService = {
-    // Users
-    getUsers: async () => {
-        const response = await axios.get(`${API_URL}/admin/users`, { headers: getAuthHeader() });
-        return response.data;
-    },
-    getUserDetails: async (id: number) => {
-        const response = await axios.get(`${API_URL}/admin/users/${id}`, { headers: getAuthHeader() });
+    // ============================================================================
+    // System Statistics (1 endpoint)
+    // ============================================================================
+
+    /**
+     * Get platform-wide statistics for admin dashboard
+     * GET /api/admin/bundles/stats
+     */
+    getSystemStats: async (): Promise<SystemStatsDto> => {
+        const response = await apiClient.get<SystemStatsDto>('/api/admin/bundles/stats');
         return response.data;
     },
 
-    // Subjects
-    getSubjects: async () => {
-        const response = await axios.get(`${API_URL}/subjects`, { headers: getAuthHeader() });
+    // ============================================================================
+    // Bundle Management (8 endpoints)
+    // ============================================================================
+
+    /**
+     * Get all bundles with statistics
+     * GET /api/admin/bundles
+     */
+    getBundles: async (): Promise<AdminBundleDto[]> => {
+        const response = await apiClient.get<AdminBundleDto[]>('/api/admin/bundles');
         return response.data;
-    },
-    createSubject: async (data: any) => {
-        const response = await axios.post(`${API_URL}/subjects`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    updateSubject: async (id: number, data: any) => {
-        const response = await axios.put(`${API_URL}/subjects/${id}`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    deleteSubject: async (id: number) => {
-        await axios.delete(`${API_URL}/subjects/${id}`, { headers: getAuthHeader() });
     },
 
-    // Lessons
-    getLessons: async () => {
-        const response = await axios.get(`${API_URL}/lessons`, { headers: getAuthHeader() });
+    /**
+     * Get statistics for a specific bundle
+     * GET /api/admin/bundles/{id}
+     */
+    getBundleStats: async (id: number): Promise<BundleStatsDto> => {
+        const response = await apiClient.get<BundleStatsDto>(`/api/admin/bundles/${id}`);
         return response.data;
-    },
-    createLesson: async (data: any) => {
-        const response = await axios.post(`${API_URL}/lessons`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    updateLesson: async (id: number, data: any) => {
-        const response = await axios.put(`${API_URL}/lessons/${id}`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    deleteLesson: async (id: number) => {
-        await axios.delete(`${API_URL}/lessons/${id}`, { headers: getAuthHeader() });
     },
 
-    // Bundles
-    createBundle: async (data: any) => {
-        const response = await axios.post(`${API_URL}/paper-bundles`, data, { headers: getAuthHeader() });
+    /**
+     * Create a new bundle
+     * POST /api/admin/bundles
+     */
+    createBundle: async (data: BundleCreateDto): Promise<AdminBundleDto> => {
+        const response = await apiClient.post<AdminBundleDto>('/api/admin/bundles', data);
         return response.data;
-    },
-    updateBundle: async (id: number, data: any) => {
-        // Assuming PUT endpoint exists or similar
-        // Spec only listed POST for create, but CRUD implies update
-        // If not, we might need to handle differently. For now assuming standard REST.
-        const response = await axios.put(`${API_URL}/paper-bundles/${id}`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    deleteBundle: async (id: number) => {
-        // Spec check: DELETE /api/paper-bundles/{id} not explicitly listed in table but implied by "CRUD bundles"
-        // If missing, this will fail. Assuming standard CRUD.
-        await axios.delete(`${API_URL}/paper-bundles/${id}`, { headers: getAuthHeader() });
     },
 
-    // Papers
-    createPaper: async (data: any) => {
-        const response = await axios.post(`${API_URL}/papers`, data, { headers: getAuthHeader() });
+    /**
+     * Update an existing bundle
+     * PUT /api/admin/bundles/{id}
+     */
+    updateBundle: async (id: number, data: BundleCreateDto): Promise<AdminBundleDto> => {
+        const response = await apiClient.put<AdminBundleDto>(`/api/admin/bundles/${id}`, data);
         return response.data;
-    },
-    updatePaper: async (id: number, data: any) => {
-        const response = await axios.put(`${API_URL}/papers/${id}`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    deletePaper: async (id: number) => {
-        await axios.delete(`${API_URL}/papers/${id}`, { headers: getAuthHeader() });
     },
 
-    // Questions
-    createQuestion: async (data: any) => {
-        const response = await axios.post(`${API_URL}/questions`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    updateQuestion: async (id: number, data: any) => {
-        const response = await axios.put(`${API_URL}/questions/${id}`, data, { headers: getAuthHeader() });
-        return response.data;
-    },
-    deleteQuestion: async (id: number) => {
-        await axios.delete(`${API_URL}/questions/${id}`, { headers: getAuthHeader() });
+    /**
+     * Delete a bundle
+     * DELETE /api/admin/bundles/{id}
+     */
+    deleteBundle: async (id: number): Promise<void> => {
+        await apiClient.delete(`/api/admin/bundles/${id}`);
     },
 
-    // Options
-    createOption: async (data: any) => {
-        const response = await axios.post(`${API_URL}/question-options`, data, { headers: getAuthHeader() });
+    /**
+     * Add a paper to a bundle
+     * POST /api/admin/bundles/{bundleId}/papers/{paperId}
+     */
+    addPaperToBundle: async (bundleId: number, paperId: number): Promise<void> => {
+        await apiClient.post(`/api/admin/bundles/${bundleId}/papers/${paperId}`);
+    },
+
+    /**
+     * Remove a paper from a bundle
+     * DELETE /api/admin/bundles/{bundleId}/papers/{paperId}
+     */
+    removePaperFromBundle: async (bundleId: number, paperId: number): Promise<void> => {
+        await apiClient.delete(`/api/admin/bundles/${bundleId}/papers/${paperId}`);
+    },
+
+    // ============================================================================
+    // Paper Management (8 endpoints)
+    // ============================================================================
+
+    /**
+     * Get all papers with statistics
+     * GET /api/admin/papers
+     */
+    getPapers: async (): Promise<AdminPaperDto[]> => {
+        const response = await apiClient.get<AdminPaperDto[]>('/api/admin/papers');
         return response.data;
     },
-    deleteOption: async (id: number) => {
-        await axios.delete(`${API_URL}/question-options/${id}`, { headers: getAuthHeader() });
+
+    /**
+     * Get a specific paper with full question details
+     * GET /api/admin/papers/{id}
+     */
+    getPaper: async (id: number): Promise<AdminPaperDto> => {
+        const response = await apiClient.get<AdminPaperDto>(`/api/admin/papers/${id}`);
+        return response.data;
+    },
+
+    /**
+     * Create a new paper
+     * POST /api/admin/papers
+     */
+    createPaper: async (data: PaperCreateDto): Promise<AdminPaperDto> => {
+        const response = await apiClient.post<AdminPaperDto>('/api/admin/papers', data);
+        return response.data;
+    },
+
+    /**
+     * Update an existing paper
+     * PUT /api/admin/papers/{id}
+     */
+    updatePaper: async (id: number, data: PaperCreateDto): Promise<AdminPaperDto> => {
+        const response = await apiClient.put<AdminPaperDto>(`/api/admin/papers/${id}`, data);
+        return response.data;
+    },
+
+    /**
+     * Delete a paper (cascades to delete all questions)
+     * DELETE /api/admin/papers/{id}
+     */
+    deletePaper: async (id: number): Promise<void> => {
+        await apiClient.delete(`/api/admin/papers/${id}`);
+    },
+
+    /**
+     * Add a question to a paper
+     * POST /api/admin/papers/{paperId}/questions
+     */
+    addQuestion: async (paperId: number, data: QuestionCreateDto): Promise<any> => {
+        const response = await apiClient.post(`/api/admin/papers/${paperId}/questions`, data);
+        return response.data;
+    },
+
+    /**
+     * Update a question
+     * PUT /api/admin/papers/{paperId}/questions/{questionId}
+     */
+    updateQuestion: async (paperId: number, questionId: number, data: QuestionCreateDto): Promise<any> => {
+        const response = await apiClient.put(`/api/admin/papers/${paperId}/questions/${questionId}`, data);
+        return response.data;
+    },
+
+    /**
+     * Delete a question
+     * DELETE /api/admin/papers/{paperId}/questions/{questionId}
+     */
+    deleteQuestion: async (paperId: number, questionId: number): Promise<void> => {
+        await apiClient.delete(`/api/admin/papers/${paperId}/questions/${questionId}`);
+    },
+
+    // ============================================================================
+    // User Management (7 endpoints)
+    // ============================================================================
+
+    /**
+     * Get all users with statistics
+     * GET /api/admin/users
+     */
+    getUsers: async (): Promise<AdminUserDto[]> => {
+        const response = await apiClient.get<AdminUserDto[]>('/api/admin/users');
+        return response.data;
+    },
+
+    /**
+     * Get a specific user's details
+     * GET /api/admin/users/{id}
+     */
+    getUser: async (id: number): Promise<AdminUserDto> => {
+        const response = await apiClient.get<AdminUserDto>(`/api/admin/users/${id}`);
+        return response.data;
+    },
+
+    /**
+     * Get all bundles a user has access to
+     * GET /api/admin/users/{userId}/bundles
+     */
+    getUserBundles: async (userId: number): Promise<UserBundleAccessDto[]> => {
+        const response = await apiClient.get<UserBundleAccessDto[]>(`/api/admin/users/${userId}/bundles`);
+        return response.data;
+    },
+
+    /**
+     * Grant bundle access to a user
+     * POST /api/admin/users/{userId}/bundles
+     */
+    grantBundleAccess: async (userId: number, data: GrantBundleAccessDto): Promise<UserBundleAccessDto> => {
+        const response = await apiClient.post<UserBundleAccessDto>(`/api/admin/users/${userId}/bundles`, data);
+        return response.data;
+    },
+
+    /**
+     * Revoke bundle access from a user
+     * DELETE /api/admin/users/{userId}/bundles/{bundleId}
+     */
+    revokeBundleAccess: async (userId: number, bundleId: number): Promise<void> => {
+        await apiClient.delete(`/api/admin/users/${userId}/bundles/${bundleId}`);
+    },
+
+    /**
+     * Get user's paper attempt information
+     * GET /api/admin/users/{userId}/attempts
+     */
+    getUserAttempts: async (userId: number): Promise<UserAttemptInfoDto[]> => {
+        const response = await apiClient.get<UserAttemptInfoDto[]>(`/api/admin/users/${userId}/attempts`);
+        return response.data;
+    },
+
+    /**
+     * Update attempt limit for a user on a specific paper
+     * PUT /api/admin/users/{userId}/papers/{paperId}/attempts
+     * Note: Currently updates global limit for all users on this paper
+     */
+    updateAttemptLimit: async (userId: number, paperId: number, data: UpdateAttemptLimitDto): Promise<void> => {
+        await apiClient.put(`/api/admin/users/${userId}/papers/${paperId}/attempts`, data);
+    },
+
+    // ============================================================================
+    // Subject & Lesson Management (Legacy endpoints, kept for backward compatibility)
+    // ============================================================================
+
+    /**
+     * Get all subjects
+     * GET /api/subjects
+     */
+    getSubjects: async (): Promise<SubjectDto[]> => {
+        const response = await apiClient.get<SubjectDto[]>('/api/subjects');
+        return response.data;
+    },
+
+    /**
+     * Create a new subject
+     * POST /api/subjects
+     */
+    createSubject: async (data: any): Promise<SubjectDto> => {
+        const response = await apiClient.post<SubjectDto>('/api/subjects', data);
+        return response.data;
+    },
+
+    /**
+     * Update a subject
+     * PUT /api/subjects/{id}
+     */
+    updateSubject: async (id: number, data: any): Promise<SubjectDto> => {
+        const response = await apiClient.put<SubjectDto>(`/api/subjects/${id}`, data);
+        return response.data;
+    },
+
+    /**
+     * Delete a subject
+     * DELETE /api/subjects/{id}
+     */
+    deleteSubject: async (id: number): Promise<void> => {
+        await apiClient.delete(`/api/subjects/${id}`);
+    },
+
+    /**
+     * Get all lessons
+     * GET /api/lessons
+     */
+    getLessons: async (): Promise<LessonDto[]> => {
+        const response = await apiClient.get<LessonDto[]>('/api/lessons');
+        return response.data;
+    },
+
+    /**
+     * Create a new lesson
+     * POST /api/lessons
+     */
+    createLesson: async (data: any): Promise<LessonDto> => {
+        const response = await apiClient.post<LessonDto>('/api/lessons', data);
+        return response.data;
+    },
+
+    /**
+     * Update a lesson
+     * PUT /api/lessons/{id}
+     */
+    updateLesson: async (id: number, data: any): Promise<LessonDto> => {
+        const response = await apiClient.put<LessonDto>(`/api/lessons/${id}`, data);
+        return response.data;
+    },
+
+    /**
+     * Delete a lesson
+     * DELETE /api/lessons/{id}
+     */
+    deleteLesson: async (id: number): Promise<void> => {
+        await apiClient.delete(`/api/lessons/${id}`);
     }
 };

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getBundles } from '@/services/bundleService';
-import { PaperBundleDto } from '@/types';
+import { PaperBundleSummaryDto } from '@/types';
 
 export const useBundles = (filters?: Record<string, string | number>) => {
-  const [bundles, setBundles] = useState<PaperBundleDto[]>([]);
+  const [bundles, setBundles] = useState<PaperBundleSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

@@ -5,14 +5,18 @@ import { Table, Spin, message } from 'antd';
 import { progressService } from '@/services/progressService';
 import Header from '@/components/Header';
 
+import { useAuth } from '@/context/AuthContext';
+
 export default function ProgressPage() {
+    const { user } = useAuth();
     const [progress, setProgress] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchProgress = async () => {
+            if (!user?.id) return;
             try {
-                const data = await progressService.getProgress();
+                const data = await progressService.getProgress(user.id);
                 setProgress(data);
             } catch (error) {
                 message.error('Failed to load progress');
@@ -21,7 +25,7 @@ export default function ProgressPage() {
             }
         };
         fetchProgress();
-    }, []);
+    }, [user?.id]);
 
     const columns = [
         {

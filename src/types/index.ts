@@ -32,6 +32,9 @@ export interface PaperBundleSummaryDto {
   name: string;
   description: string;
   price: number;
+  type: 'MCQ' | 'ESSAY' | 'MIXED';
+  examType: string;
+  isPastPaper: boolean;
 }
 
 /** Complete bundle details */
@@ -40,7 +43,7 @@ export interface PaperBundleDto {
   name: string;
   description: string;
   price: number;
-  type: string;
+  type: 'MCQ' | 'ESSAY' | 'MIXED';
   examType: string;
   subjectId?: number;
   lessonId?: number;
@@ -53,6 +56,9 @@ export interface PaperBundleDetailDto {
   name: string;
   description: string;
   price: number;
+  type: 'MCQ' | 'ESSAY' | 'MIXED';
+  examType: string;
+  isPastPaper: boolean;
   papers: PaperDto[];
 }
 
@@ -62,7 +68,7 @@ export interface PaperDto {
   name: string;
   description: string;
   bundleId: number;
-  type: string;
+  type: 'MCQ' | 'ESSAY' | 'MIXED';
   maxFreeAttempts: number;
 }
 
@@ -210,6 +216,8 @@ export interface LeaderboardEntryDto {
   studentName: string;
   marks: number;
   timeTaken: number;
+  isAnonymous?: boolean;
+  userId?: number;
 }
 
 /** Leaderboard opt-in request */
