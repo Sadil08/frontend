@@ -1,8 +1,9 @@
 import { Table } from 'antd';
-import { LeaderboardEntryDto } from '@/types';
+import { TrophyOutlined, CrownOutlined } from '@ant-design/icons';
+import { LeaderboardEntry } from '@/types/leaderboardTypes';
 
 interface LeaderboardTableProps {
-  data: LeaderboardEntryDto[];
+  entries: LeaderboardEntry[];
   currentUserId?: number;
   loading?: boolean;
 }
@@ -13,24 +14,19 @@ interface LeaderboardTableProps {
  * Highlights the current user's entry if they're on the leaderboard
  */
 export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
-  data,
+  entries,
   currentUserId,
   loading = false
 }) => {
   const columns = [
     {
       title: 'Rank',
+      dataIndex: 'rank',
       key: 'rank',
       width: 80,
-      render: (_: any, __: any, index: number) => (
+      render: (rank: number) => (
         <div className="flex items-center justify-center">
-          <span className={`font-bold ${index === 0 ? 'text-yellow-600 text-xl' :
-              index === 1 ? 'text-gray-400 text-lg' :
-                index === 2 ? 'text-orange-600 text-lg' :
-                  'text-gray-600'
-            }`}>
-            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
-          </span>
+          {getRankDisplay(rank)}
         </div>
       )
     },
@@ -38,49 +34,95 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       title: 'Student',
       dataIndex: 'studentName',
       key: 'studentName',
-      render: (name: string, record: LeaderboardEntryDto) => (
-        <span className={`font-medium ${record.userId === currentUserId ? 'text-blue-600 font-bold' : 'text-gray-900'
-          }`}>
-          {name} {record.userId === currentUserId && '(You)'}
-        </span>
+      render: (name: string, record: LeaderboardEntry) => (
+        <div className="flex items-center gap-2">
+          <span className={`font-medium ${record.isCurrentUser ? 'text-blue-600 font-bold' : 'text-gray-900'}`}>
+            {name}
+          </span>
+          {record.isCurrentUser && (
+            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+              You
+            </span>
+          )}
+        </div>
       )
     },
     {
-      title: 'Marks',
+      title: 'Score',
       dataIndex: 'marks',
       key: 'marks',
-      width: 100,
+      width: 120,
       render: (marks: number) => (
-        <span className="font-semibold text-green-600">{marks}</span>
-      )
+        <span className="font-bold text-lg text-gray-900">
+          {marks}/100
+        </span>
+      ),
+      sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => b.marks - a.marks
     },
     {
-      title: 'Time Taken',
+      title: 'Time',
       dataIndex: 'timeTaken',
       key: 'timeTaken',
-      width: 120,
+      width: 100,
       render: (time: number) => (
-        <span className="text-gray-700">{time} min</span>
-      )
+        <span className="text-gray-600">
+          {time} min
+        </span>
+      ),
+      sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => a.timeTaken - b.timeTaken
     },
   ];
 
+  const getRankDisplay = (rank: number) => {
+    switch (rank) {
+      case 1: return <TrophyOutlined className="text-yellow-500 text-xl" />;
+      case 2: return <CrownOutlined className="text-gray-400 text-xl" />;
+      case 3: return <span className="text-amber-600 text-xl">🥉</span>;
+      default: return <span className="font-bold text-gray-600">#{rank}</span>;
+    }
+  };
+
+  const getRowClassName = (record: LeaderboardEntry) => {
+    if (record.isCurrentUser) {
+      return 'leaderboard-user-highlight font-medium';
+    }
+    return 'hover:bg-gray-50 transition-colors';
+  };
+
   return (
-    <Table
-      columns={columns}
-      dataSource={data}
-      rowKey={(record, index) => `${record.studentName}-${index}`}
-      loading={loading}
-      pagination={false}
-      className="leaderboard-table"
-      rowClassName={(record) =>
-        record.userId === currentUserId
-          ? 'bg-blue-50 hover:bg-blue-100 font-semibold'
-          : 'hover:bg-gray-50'
-      }
-      locale={{
-        emptyText: 'No entries yet. Be the first to opt-in!'
-      }}
-    />
+    <div
+      role="region"
+      aria-label={`Leaderboard rankings for paper`}
+      aria-live="polite"
+    >
+      <Table
+        columns={columns}
+        dataSource={entries}
+        rowKey={(record) => `${record.userId}-${record.rank}`}
+        loading={loading}
+        pagination={false}
+        className="leaderboard-table"
+        rowClassName={getRowClassName}
+        scroll={{ x: 600 }}
+        locale={{
+          emptyText: 'No entries yet. Be the first to opt-in!'
+        }}
+        summary={() => {
+          const userEntry = entries.find(entry => entry.isCurrentUser);
+          if (userEntry) {
+            return (
+              <Table.Summary.Row>
+                <Table.Summary.Cell index={0} colSpan={4}>
+                  <div className="sr-only" aria-live="assertive">
+                    Your current ranking is {userEntry.rank} out of {entries.length} participants with a score of {userEntry.marks} out of 100.
+                  </div>
+                </Table.Summary.Cell>
+              </Table.Summary.Row>
+            );
+          }
+          return null;
+        }}
+      />
+    </div>
   );
 };

@@ -9,7 +9,8 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { paperService } from '@/services/paperService';
 import { leaderboardService } from '@/services/leaderboardService';
-import { AttemptDetails, LeaderboardEntryDto } from '@/types';
+import { AttemptDetails } from '@/types';
+import { LeaderboardEntry } from '@/types/leaderboardTypes';
 import { message, Modal } from 'antd';
 
 /**
@@ -24,7 +25,7 @@ export default function PaperResultsPage() {
     const paperId = parseInt(params.id as string);
 
     const [attempt, setAttempt] = useState<AttemptDetails | null>(null);
-    const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDto[]>([]);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -48,7 +49,7 @@ export default function PaperResultsPage() {
     const fetchLeaderboard = useCallback(async () => {
         try {
             setLoadingLeaderboard(true);
-            const data = await leaderboardService.getPaperLeaderboard(paperId);
+            const data = await leaderboardService.getPaperLeaderboard(paperId, attempt?.studentId);
             setLeaderboard(data);
         } catch (err: any) {
             console.error('Error fetching leaderboard:', err);
@@ -56,7 +57,7 @@ export default function PaperResultsPage() {
         } finally {
             setLoadingLeaderboard(false);
         }
-    }, [paperId]);
+    }, [paperId, attempt?.studentId]);
 
     useEffect(() => {
         if (attemptId) {
@@ -227,7 +228,7 @@ export default function PaperResultsPage() {
                                         This leaderboard shows the best attempt from each student who has opted in to share their results.
                                     </p>
                                     <LeaderboardTable
-                                        data={leaderboard}
+                                        entries={leaderboard}
                                         currentUserId={attempt.studentId}
                                         loading={loadingLeaderboard}
                                     />

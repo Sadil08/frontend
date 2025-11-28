@@ -33,7 +33,7 @@ export default function LeaderboardPage() {
                     {loading ? (
                         <div className="flex justify-center p-8"><Spin /></div>
                     ) : (
-                        <LeaderboardTable data={entries} />
+                        <LeaderboardTable entries={entries} />
                     )}
                 </div>
             </div>

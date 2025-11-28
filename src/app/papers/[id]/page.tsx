@@ -9,7 +9,8 @@ import { AttemptHistory } from '@/components/AttemptHistory';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { paperService } from '@/services/paperService';
 import { leaderboardService } from '@/services/leaderboardService';
-import { AttemptHistoryItem, LeaderboardEntryDto, PaperDto } from '@/types';
+import { AttemptHistoryItem, PaperDto } from '@/types';
+import { LeaderboardEntry } from '@/types/leaderboardTypes';
 import { Tabs, message } from 'antd';
 
 const { TabPane } = Tabs;
@@ -25,7 +26,7 @@ export default function PaperDetailsPage() {
 
     const [paper, setPaper] = useState<PaperDto | null>(null);
     const [attempts, setAttempts] = useState<AttemptHistoryItem[]>([]);
-    const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDto[]>([]);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingAttempts, setLoadingAttempts] = useState(false);
     const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
@@ -76,7 +77,7 @@ export default function PaperDetailsPage() {
     const fetchLeaderboard = useCallback(async () => {
         try {
             setLoadingLeaderboard(true);
-            const data = await leaderboardService.getPaperLeaderboard(paperId);
+            const data = await leaderboardService.getPaperLeaderboard(paperId, currentUserId);
             setLeaderboard(data);
         } catch (err: any) {
             console.error('Error fetching leaderboard:', err);
@@ -84,7 +85,7 @@ export default function PaperDetailsPage() {
         } finally {
             setLoadingLeaderboard(false);
         }
-    }, [paperId]);
+    }, [paperId, currentUserId]);
 
     useEffect(() => {
         if (paperId) {
@@ -240,7 +241,7 @@ export default function PaperDetailsPage() {
                                                 </p>
                                             </div>
                                             <LeaderboardTable
-                                                data={leaderboard}
+                                                entries={leaderboard}
                                                 currentUserId={currentUserId}
                                                 loading={loadingLeaderboard}
                                             />

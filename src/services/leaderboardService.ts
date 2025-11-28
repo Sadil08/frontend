@@ -1,5 +1,6 @@
 import apiClient from '@/utils/apiClient';
 import { LeaderboardEntryDto, LeaderboardOptInDto } from '@/types';
+import { LeaderboardEntry } from '@/types/leaderboardTypes';
 
 /**
  * Service for managing leaderboard functionality
@@ -9,11 +10,21 @@ export const leaderboardService = {
   /**
    * Get leaderboard entries for a specific paper
    * @param paperId - Paper ID
-   * @returns Array of leaderboard entries with student names, marks, and time
+   * @param currentUserId - Current user ID for highlighting
+   * @returns Array of leaderboard entries with ranking and user highlighting
    */
-  getPaperLeaderboard: async (paperId: number): Promise<LeaderboardEntryDto[]> => {
+  getPaperLeaderboard: async (paperId: number, currentUserId?: number): Promise<LeaderboardEntry[]> => {
     const response = await apiClient.get<LeaderboardEntryDto[]>(`/api/leaderboard/paper/${paperId}`);
-    return response.data;
+
+    // Process data for user highlighting and ranking
+    return response.data.map((entry, index) => ({
+      rank: index + 1,
+      studentName: entry.userId === currentUserId ? 'You' : entry.studentName,
+      marks: entry.marks,
+      timeTaken: entry.timeTaken,
+      userId: entry.userId || 0, // Provide default value for undefined userId
+      isCurrentUser: entry.userId === currentUserId
+    }));
   },
 
   /**

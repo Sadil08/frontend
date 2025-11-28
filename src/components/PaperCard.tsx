@@ -112,6 +112,14 @@ export const PaperCard: React.FC<PaperCardProps> = ({
                         📚 View Past Attempts
                     </button>
                 )}
+
+                {/* View Leaderboard Button - Always visible */}
+                <button
+                    onClick={() => router.push(`/papers/${paper.id}/leaderboard`)}
+                    className="w-full btn-outline-secondary"
+                >
+                    🏆 View Leaderboard
+                </button>
             </div>
         </div>
     );
