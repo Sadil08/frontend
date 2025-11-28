@@ -168,8 +168,40 @@ Response: List<Map<String, Object>>
     "timeTaken": 40
   },
   {
-    "studentName": "student2",
-    "marks": 90,
-    "timeTaken": 45
+  }
+]
+
+Attempt History
+10. Get Attempt History
+Endpoint: GET /api/student-paper-attempts/paper/{paperId}/history
+Headers: Authorization: Bearer {jwt_token}
+Description: Returns all attempts by the authenticated student for a specific paper, ordered by start time (newest first).
+Response: List<StudentPaperAttemptDto>
+[
+  {
+    "id": 53,
+    "studentId": 2,
+    "paperId": 9,
+    "attemptNumber": 6,
+    "status": "SUBMITTED",
+    "startedAt": "2025-11-28T07:38:02.743625",
+    "completedAt": "2025-11-28T07:39:02.743675",
+    "timeTakenMinutes": 1,
+    "answers": [
+      {
+        "id": 1501,
+        "attemptId": 53,
+        "questionId": 201,
+        "questionText": "What is 2+2?",
+        "answerText": "4",
+        "selectedOptionId": 302,
+        "submittedAt": "2025-11-28T07:39:02",
+        "marksAwarded": 3,
+        "marksAvailable": 5,
+        "aiFeedback": "Good attempt!"
+      }
+    ],
+    "overallFeedback": "Excellent start!",
+    "totalMarks": 3
   }
 ]

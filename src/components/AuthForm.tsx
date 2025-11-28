@@ -22,13 +22,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
         // For register, assume login after
         const jwtResponse = await login(values.email, values.password);
         setAuth(jwtResponse.token, { id: userResponse.id, role: userResponse.role, email: userResponse.email });
-        router.push('/dashboard');
+        // Redirect based on role
+        router.push(userResponse.role === 'ADMIN' ? '/admin' : '/dashboard');
       } else {
         const jwtResponse = await login(values.email, values.password);
         // Decode user from token
         const payload = JSON.parse(atob(jwtResponse.token.split('.')[1]));
         setAuth(jwtResponse.token, { id: payload.id, role: payload.role, email: payload.email });
-        router.push('/dashboard');
+        // Redirect based on role
+        router.push(payload.role === 'ADMIN' ? '/admin' : '/dashboard');
       }
     } catch (error) {
       message.error('Authentication failed');

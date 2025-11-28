@@ -6,23 +6,27 @@ import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { ResultsCard } from '@/components/ResultsCard';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
+import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { paperService } from '@/services/paperService';
 import { leaderboardService } from '@/services/leaderboardService';
-import { StudentPaperAttemptDto } from '@/types';
+import { StudentPaperAttemptDto, LeaderboardEntryDto } from '@/types';
 import { message, Modal } from 'antd';
 
 /**
  * Paper Results Page
- * Displays paper attempt results with AI feedback
+ * Displays paper attempt results with AI feedback and leaderboard
  */
 export default function PaperResultsPage() {
     const params = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
     const attemptId = searchParams.get('attemptId');
+    const paperId = parseInt(params.id as string);
 
     const [attempt, setAttempt] = useState<StudentPaperAttemptDto | null>(null);
+    const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [optingIn, setOptingIn] = useState(false);
 
@@ -41,9 +45,23 @@ export default function PaperResultsPage() {
         }
     }, [attemptId]);
 
+    const fetchLeaderboard = useCallback(async () => {
+        try {
+            setLoadingLeaderboard(true);
+            const data = await leaderboardService.getPaperLeaderboard(paperId);
+            setLeaderboard(data);
+        } catch (err: any) {
+            console.error('Error fetching leaderboard:', err);
+            // Don't show error message for leaderboard - it's optional
+        } finally {
+            setLoadingLeaderboard(false);
+        }
+    }, [paperId]);
+
     useEffect(() => {
         if (attemptId) {
             fetchResults();
+            fetchLeaderboard();
 
             // Poll for AI feedback if not ready
             const pollInterval = setInterval(() => {
@@ -58,7 +76,7 @@ export default function PaperResultsPage() {
 
             return () => clearInterval(pollInterval);
         }
-    }, [attemptId, fetchResults]);
+    }, [attemptId, fetchResults, fetchLeaderboard]);
 
     const handleOptIn = async () => {
         if (!attemptId) return;
@@ -73,6 +91,8 @@ export default function PaperResultsPage() {
                     setOptingIn(true);
                     await leaderboardService.optInToLeaderboard(parseInt(attemptId));
                     message.success('Successfully opted in to leaderboard!');
+                    // Refresh leaderboard after opt-in
+                    fetchLeaderboard();
                 } catch (err: any) {
                     console.error('Error opting in:', err);
                     message.error('Failed to opt in to leaderboard');
@@ -126,9 +146,9 @@ export default function PaperResultsPage() {
                     {!loading && !error && attempt && (
                         <>
                             <div className={`card-elevated p-8 mb-8 animate-slide-up ${performancePercentage >= 80 ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-200' :
-                                    performancePercentage >= 60 ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200' :
-                                        performancePercentage >= 40 ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200' :
-                                            'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
+                                performancePercentage >= 60 ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200' :
+                                    performancePercentage >= 40 ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200' :
+                                        'bg-gradient-to-br from-red-50 to-red-100 border-red-200'
                                 }`}>
                                 <div className="text-center mb-6">
                                     <h1 className="text-4xl font-bold text-gray-900 mb-2">Paper Results</h1>
@@ -185,6 +205,32 @@ export default function PaperResultsPage() {
                                     {attempt.answers.map((answer, index) => (
                                         <ResultsCard key={answer.id} answer={answer} questionNumber={index + 1} />
                                     ))}
+                                </div>
+                            </div>
+
+                            {/* Leaderboard Section */}
+                            <div className="mb-8">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                        🏆 Paper Leaderboard
+                                    </h2>
+                                    <button
+                                        onClick={fetchLeaderboard}
+                                        className="btn-secondary text-sm"
+                                        disabled={loadingLeaderboard}
+                                    >
+                                        {loadingLeaderboard ? 'Refreshing...' : '🔄 Refresh'}
+                                    </button>
+                                </div>
+                                <div className="card-base p-6">
+                                    <p className="text-sm text-gray-600 mb-4">
+                                        This leaderboard shows the best attempt from each student who has opted in to share their results.
+                                    </p>
+                                    <LeaderboardTable
+                                        data={leaderboard}
+                                        currentUserId={attempt.studentId}
+                                        loading={loadingLeaderboard}
+                                    />
                                 </div>
                             </div>
 

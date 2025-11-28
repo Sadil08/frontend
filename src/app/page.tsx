@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export const dynamic = 'force-dynamic';
 import { Select } from 'antd';
@@ -12,15 +12,19 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function Home() {
   const { user } = useAuth();
-  const [filters, setFilters] = useState<Record<string, string | number>>({});
+  const [filterState, setFilterState] = useState<Record<string, string | number>>({});
+
+  // Serialize filters to prevent object recreations
+  const filtersKey = JSON.stringify(filterState);
+  const filters = useMemo(() => filterState, [filtersKey]);
   const { bundles, loading } = useBundles(filters);
 
   const handleSearch = (query: string) => {
-    setFilters({ ...filters, search: query });
+    setFilterState(prev => ({ ...prev, search: query }));
   };
 
   const handleFilter = (key: string, value: string) => {
-    setFilters({ ...filters, [key]: value });
+    setFilterState(prev => ({ ...prev, [key]: value }));
   };
 
   return (

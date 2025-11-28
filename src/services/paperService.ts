@@ -67,6 +67,17 @@ export const paperService = {
     getAttemptResults: async (attemptId: number): Promise<StudentPaperAttemptDto> => {
         const response = await apiClient.get<StudentPaperAttemptDto>(`/api/papers/attempts/${attemptId}`);
         return response.data;
+    },
+
+    /**
+     * Get attempt history for a specific paper
+     * Returns all attempts by the authenticated student for the paper
+     * @param paperId - Paper ID
+     * @returns List of all attempts ordered by start time (newest first)
+     */
+    getAttemptHistory: async (paperId: number): Promise<StudentPaperAttemptDto[]> => {
+        const response = await apiClient.get<StudentPaperAttemptDto[]>(`/api/student-paper-attempts/paper/${paperId}/history`);
+        return response.data;
     }
 };
 
