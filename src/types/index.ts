@@ -136,6 +136,10 @@ export interface StudentAnswerDto {
   marksAwarded: number | null;
   marksAvailable: number;
   aiFeedback: string | null;
+  // Correct answer fields (only available after submission)
+  correctAnswerText?: string | null;
+  correctOptionId?: number | null;
+  correctOptionText?: string | null;
 }
 
 /** Student paper attempt with nested answers and overall feedback */
@@ -293,3 +297,6 @@ export interface UserDetailDto {
   scores: LeaderboardEntryDto[];
   aiFeedbackSummaries: AIAnalysisDto[];
 }
+
+// View Past Attempts feature types
+export * from './attemptTypes';

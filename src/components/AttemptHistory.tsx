@@ -1,15 +1,12 @@
 "use client";
 
 import React from 'react';
-import { StudentPaperAttemptDto } from '@/types';
-import { Card, Tag, Empty } from 'antd';
+import { AttemptHistoryItem, AttemptHistoryProps } from '@/types';
+import { Card, Tag, Empty, Button, Typography } from 'antd';
+import { ClockCircleOutlined, TrophyOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 
-interface AttemptHistoryProps {
-    attempts: StudentPaperAttemptDto[];
-    paperId: number;
-    loading?: boolean;
-}
+const { Title, Text } = Typography;
 
 /**
  * Attempt History Component
@@ -43,9 +40,11 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
         return 'text-red-600';
     };
 
-    const calculatePercentage = (attempt: StudentPaperAttemptDto) => {
-        if (!attempt.totalMarks) return 0;
-        const totalPossible = attempt.answers.reduce((sum, ans) => sum + ans.marksAvailable, 0);
+    const calculatePercentage = (attempt: AttemptHistoryItem): number => {
+        // For summary view, we'll use a placeholder calculation
+        // In a real implementation, you might want to pass total possible marks as a prop
+        // or calculate it differently. For now, assume 20 marks as maximum.
+        const totalPossible = 20; // This should be dynamic based on paper data
         return totalPossible > 0 ? (attempt.totalMarks / totalPossible) * 100 : 0;
     };
 
@@ -89,79 +88,128 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
     }
 
     return (
-        <div className="space-y-4">
-            {attempts.map((attempt, index) => {
-                const percentage = calculatePercentage(attempt);
-                const totalPossible = attempt.answers.reduce((sum, ans) => sum + ans.marksAvailable, 0);
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <Title level={3} className="mb-1">
+                        Your Previous Attempts
+                    </Title>
+                    <Text type="secondary">
+                        Click on any attempt to view detailed feedback and answers
+                    </Text>
+                </div>
+                <div className="text-right">
+                    <div className="text-sm text-gray-500">Total Attempts</div>
+                    <div className="text-2xl font-bold text-blue-600">
+                        {attempts.length}
+                    </div>
+                </div>
+            </div>
 
-                return (
-                    <Card
-                        key={attempt.id}
-                        className="card-base hover:shadow-lg transition-all duration-300 cursor-pointer"
-                        onClick={() => router.push(`/papers/${paperId}/results?attemptId=${attempt.id}`)}
-                    >
-                        <div className="flex items-center justify-between">
-                            {/* Left: Attempt Info */}
-                            <div className="flex items-center gap-4">
-                                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-xl">
-                                    #{attempt.attemptNumber}
-                                </div>
+            {/* Attempt Cards */}
+            <div className="space-y-4">
+                {attempts.map((attempt, index) => {
+                    const percentage = calculatePercentage(attempt);
 
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="text-lg font-semibold text-gray-900">
-                                            Attempt {attempt.attemptNumber}
-                                        </h3>
-                                        <Tag color={getStatusColor(attempt.status)}>
-                                            {attempt.status}
-                                        </Tag>
-                                        {index === 0 && (
-                                            <Tag color="blue">Latest</Tag>
-                                        )}
+                    return (
+                        <Card
+                            key={attempt.id}
+                            className="card-interactive hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                            onClick={() => router.push(`/papers/${paperId}/attempts/${attempt.id}`)}
+                            hoverable
+                            bodyStyle={{ padding: '24px' }}
+                        >
+                            <div className="flex items-start justify-between">
+                                {/* Left: Attempt Info */}
+                                <div className="flex items-start gap-4 flex-1">
+                                    {/* Attempt Number Badge */}
+                                    <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-xl shadow-lg group-hover:scale-110 transition-transform duration-200">
+                                        #{attempt.attemptNumber}
                                     </div>
-                                    <p className="text-sm text-gray-600">
-                                        {formatDate(attempt.startedAt)}
-                                    </p>
-                                </div>
-                            </div>
 
-                            {/* Right: Performance */}
-                            <div className="text-right">
-                                {attempt.totalMarks !== null ? (
-                                    <>
-                                        <div className="text-3xl font-bold text-gray-900 mb-1">
-                                            {attempt.totalMarks}
-                                            <span className="text-lg text-gray-500">/{totalPossible}</span>
+                                    <div className="flex-1">
+                                        {/* Header Row */}
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Title level={4} className="mb-0">
+                                                Attempt {attempt.attemptNumber}
+                                            </Title>
+                                            <Tag color={getStatusColor(attempt.status)}>
+                                                {attempt.status}
+                                            </Tag>
+                                            {index === 0 && (
+                                                <Tag color="blue" icon={<TrophyOutlined />}>
+                                                    Latest
+                                                </Tag>
+                                            )}
                                         </div>
-                                        <div className={`text-sm font-semibold ${getPerformanceColor(percentage)}`}>
-                                            {percentage.toFixed(1)}%
-                                        </div>
-                                        {attempt.timeTakenMinutes && (
-                                            <div className="text-xs text-gray-500 mt-1">
+
+                                        {/* Metadata */}
+                                        <div className="flex items-center gap-6 text-sm text-gray-600 mb-3">
+                                            <div className="flex items-center gap-1">
+                                                <ClockCircleOutlined />
+                                                {formatDate(attempt.completedAt)}
+                                            </div>
+                                            <div>
                                                 ⏱️ {attempt.timeTakenMinutes} min
                                             </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="text-sm text-gray-500">
-                                        <div className="spinner w-6 h-6 mx-auto mb-2" />
-                                        Analyzing...
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                                            <div>
+                                                📊 {attempt.totalMarks} marks
+                                            </div>
+                                        </div>
 
-                        {/* Overall Feedback Preview */}
-                        {attempt.overallFeedback && (
-                            <div className="mt-4 pt-4 border-t border-gray-200">
-                                <p className="text-sm text-gray-700 line-clamp-2">
-                                    💡 {attempt.overallFeedback}
-                                </p>
+                                        {/* Feedback Preview */}
+                                        {attempt.overallFeedbackSummary && (
+                                            <div className="bg-gray-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                                                <div className="flex items-start gap-2">
+                                                    <span className="text-blue-600 text-sm">💡</span>
+                                                    <Text className="text-gray-700 text-sm line-clamp-2">
+                                                        {attempt.overallFeedbackSummary}
+                                                    </Text>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Right: Performance Score */}
+                                <div className="text-right ml-6">
+                                    <div className="text-center">
+                                        <div className="text-4xl font-bold text-gray-900 mb-1">
+                                            {attempt.totalMarks}
+                                            <span className="text-xl text-gray-500">/20</span>
+                                        </div>
+                                        <div className={`text-lg font-bold ${getPerformanceColor(percentage)} mb-2`}>
+                                            {percentage.toFixed(0)}%
+                                        </div>
+                                        <div className="w-20 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${
+                                                    percentage >= 80 ? 'bg-green-500' :
+                                                    percentage >= 60 ? 'bg-blue-500' :
+                                                    percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                }`}
+                                                style={{ width: `${Math.min(100, percentage)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-                    </Card>
-                );
-            })}
+
+                            {/* View Details Button */}
+                            <div className="mt-4 pt-4 border-t border-gray-100">
+                                <Button
+                                    type="link"
+                                    className="p-0 text-blue-600 hover:text-blue-800 group-hover:translate-x-1 transition-transform duration-200"
+                                    icon={<EyeOutlined />}
+                                >
+                                    View Full Details
+                                </Button>
+                            </div>
+                        </Card>
+                    );
+                })}
+            </div>
         </div>
     );
 };

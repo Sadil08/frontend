@@ -3,7 +3,9 @@ import {
     PaperDto,
     PaperAttemptDto,
     PaperSubmissionDto,
-    StudentPaperAttemptDto
+    StudentPaperAttemptDto,
+    AttemptHistoryItem,
+    AttemptDetails
 } from '@/types';
 
 /**
@@ -58,25 +60,53 @@ export const paperService = {
         return response.data;
     },
 
+
     /**
-     * Get results for a specific attempt
-     * Includes AI feedback if analysis is complete
-     * @param attemptId - Attempt ID
-     * @returns Complete attempt with answers and AI feedback
+     * Get attempt history for a specific paper (summary list only)
+     * Returns lightweight summary of all attempts by the authenticated student for the paper
+     * @param paperId - Paper ID
+     * @returns List of attempt summaries ordered by start time (newest first)
      */
-    getAttemptResults: async (attemptId: number): Promise<StudentPaperAttemptDto> => {
-        const response = await apiClient.get<StudentPaperAttemptDto>(`/api/papers/attempts/${attemptId}`);
+    getAttemptHistory: async (paperId: number): Promise<AttemptHistoryItem[]> => {
+        const response = await apiClient.get<AttemptHistoryItem[]>(`/api/student-paper-attempts/paper/${paperId}/history`);
         return response.data;
     },
 
     /**
-     * Get attempt history for a specific paper
-     * Returns all attempts by the authenticated student for the paper
-     * @param paperId - Paper ID
-     * @returns List of all attempts ordered by start time (newest first)
+     * Get detailed attempt with all questions, answers, and AI feedback
+     * @param attemptId - Attempt ID to get details for
+     * @returns Complete attempt with all answers and feedback
+     * @throws {403} - If attempt belongs to different user
+     * @throws {404} - If attempt not found
      */
-    getAttemptHistory: async (paperId: number): Promise<StudentPaperAttemptDto[]> => {
-        const response = await apiClient.get<StudentPaperAttemptDto[]>(`/api/student-paper-attempts/paper/${paperId}/history`);
+    getAttemptDetails: async (attemptId: number): Promise<AttemptDetails> => {
+        try {
+            const response = await apiClient.get<AttemptDetails>(
+                `/api/papers/attempts/${attemptId}`
+            );
+            return response.data;
+        } catch (error: any) {
+            if (error.response?.status === 403) {
+                throw new Error('You do not have permission to view this attempt');
+            } else if (error.response?.status === 404) {
+                throw new Error('Attempt not found');
+            } else if (error.response?.status === 401) {
+                throw new Error('Authentication required');
+            } else {
+                throw new Error('Failed to load attempt details');
+            }
+        }
+    },
+
+    /**
+     * Get attempt results (alias for backward compatibility)
+     * @param attemptId - Attempt ID
+     * @returns Complete attempt with answers and AI feedback
+     */
+    getAttemptResults: async (attemptId: number): Promise<AttemptDetails> => {
+        const response = await apiClient.get<AttemptDetails>(
+            `/api/papers/attempts/${attemptId}`
+        );
         return response.data;
     }
 };

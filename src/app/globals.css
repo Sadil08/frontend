@@ -517,4 +517,233 @@ body {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Attempt-Specific Animations and Enhancements */
+
+  /* Attempt Card Animations */
+  .attempt-card-enter {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+
+  .attempt-card-enter-active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: all 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .attempt-card-hover {
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .attempt-card-hover:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+
+  /* Question Card Animations */
+  .question-reveal {
+    animation: slideInFromLeft 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes slideInFromLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Staggered animation for multiple questions */
+  .question-card:nth-child(1) { animation-delay: 0ms; }
+  .question-card:nth-child(2) { animation-delay: 100ms; }
+  .question-card:nth-child(3) { animation-delay: 200ms; }
+  .question-card:nth-child(4) { animation-delay: 300ms; }
+  .question-card:nth-child(5) { animation-delay: 400ms; }
+
+  /* Performance Indicators Animation */
+  .performance-bar {
+    transition: width 800ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .score-number {
+    animation: countUp 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes countUp {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Feedback Section Animations */
+  .feedback-expand {
+    animation: expandHeight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes expandHeight {
+    from {
+      opacity: 0;
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      max-height: 200px;
+    }
+  }
+
+  /* Attempt Header Stats Animation */
+  .stat-box {
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both;
+  }
+
+  .stat-box:nth-child(1) { animation-delay: 0.1s; }
+  .stat-box:nth-child(2) { animation-delay: 0.2s; }
+  .stat-box:nth-child(3) { animation-delay: 0.3s; }
+  .stat-box:nth-child(4) { animation-delay: 0.4s; }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Answer Comparison Hover Effects */
+  .answer-comparison {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .answer-comparison:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  }
+
+  /* Mobile Optimizations */
+  @media (max-width: 768px) {
+    .attempt-card-interactive:hover {
+      transform: translateY(-2px); /* Reduced hover on mobile */
+    }
+
+    .question-reveal {
+      animation-duration: 0.4s; /* Faster on mobile */
+    }
+
+    .stat-box {
+      animation-duration: 0.4s; /* Faster on mobile */
+    }
+  }
+
+  /* Reduced Motion Support */
+  @media (prefers-reduced-motion: reduce) {
+    .attempt-card-hover,
+    .question-reveal,
+    .performance-bar,
+    .score-number,
+    .feedback-expand,
+    .stat-box,
+    .answer-comparison {
+      animation: none;
+      transition: none;
+    }
+
+    .attempt-card-hover:hover {
+      transform: none;
+    }
+
+    .answer-comparison:hover {
+      transform: none;
+      box-shadow: none;
+    }
+  }
+
+  /* High Contrast Mode Support */
+  @media (prefers-contrast: high) {
+    .card-interactive {
+      border: 2px solid;
+    }
+
+    .attempt-card-interactive:hover {
+      border-width: 3px;
+    }
+
+    .answer-comparison {
+      border: 2px solid;
+    }
+  }
+
+  /* Focus Visible Enhancements */
+  .attempt-focus-visible:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* Loading State Enhancements */
+  .attempt-skeleton-pulse {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: attempt-shimmer 2s infinite;
+  }
+
+  @keyframes attempt-shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  /* Success/Error State Animations */
+  .attempt-success-bounce {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .attempt-error-shake {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes bounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes shake {
+    0%, 100% {
+      transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+      transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+      transform: translateX(5px);
+    }
+  }
 }

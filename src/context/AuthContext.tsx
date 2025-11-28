@@ -37,17 +37,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Decode JWT to get user info
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        setUser({ id: payload.id, role: payload.role, email: payload.email });
+        console.log('JWT Payload:', payload); // Debug logging
+        setUser({ id: payload.id, role: payload.role, email: payload.sub });
       } catch (error) {
-        console.error('Invalid token');
+        console.error('Invalid token:', error);
         localStorage.removeItem('token');
       }
+    } else {
+      console.log('No token found in localStorage'); // Debug logging
     }
   }, []);
 
   const login = (token: string, userData: User) => {
     localStorage.setItem('token', token);
-    setUser(userData);
+    // Decode token to get user info
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      setUser({ id: payload.id, role: payload.role, email: payload.sub });
+    } catch (error) {
+      console.error('Invalid token during login:', error);
+      setUser(userData); // Fallback to provided userData
+    }
   };
 
   const logout = () => {

@@ -28,7 +28,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
         const jwtResponse = await login(values.email, values.password);
         // Decode user from token
         const payload = JSON.parse(atob(jwtResponse.token.split('.')[1]));
-        setAuth(jwtResponse.token, { id: payload.id, role: payload.role, email: payload.email });
+        setAuth(jwtResponse.token, { id: payload.id, role: payload.role, email: payload.sub });
         // Redirect based on role
         router.push(payload.role === 'ADMIN' ? '/admin' : '/dashboard');
       }

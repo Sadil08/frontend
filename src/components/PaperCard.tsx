@@ -82,24 +82,37 @@ export const PaperCard: React.FC<PaperCardProps> = ({
                 )}
             </div>
 
-            {/* Action Button */}
-            <button
-                onClick={handleAttempt}
-                disabled={disabled || (attemptsRemaining !== undefined && attemptsRemaining === 0)}
-                className={`w-full ${disabled || (attemptsRemaining !== undefined && attemptsRemaining === 0)
-                        ? 'btn-secondary cursor-not-allowed'
-                        : 'btn-primary'
-                    }`}
-            >
-                {disabled
-                    ? 'Purchase Required'
-                    : attemptsRemaining === 0
-                        ? 'No Attempts Left'
-                        : hasAttempted
-                            ? 'Retry Paper'
-                            : 'Attempt Paper'
-                }
-            </button>
+            {/* Action Buttons */}
+            <div className="space-y-2">
+                {/* Primary Action Button */}
+                <button
+                    onClick={handleAttempt}
+                    disabled={disabled || (attemptsRemaining !== undefined && attemptsRemaining === 0)}
+                    className={`w-full ${disabled || (attemptsRemaining !== undefined && attemptsRemaining === 0)
+                            ? 'btn-secondary cursor-not-allowed'
+                            : 'btn-primary'
+                        }`}
+                >
+                    {disabled
+                        ? 'Purchase Required'
+                        : attemptsRemaining === 0
+                            ? 'No Attempts Left'
+                            : hasAttempted
+                                ? 'Retry Paper'
+                                : 'Attempt Paper'
+                    }
+                </button>
+
+                {/* View Past Attempts Button - Only show if attempted */}
+                {hasAttempted && (
+                    <button
+                        onClick={() => router.push(`/papers/${paper.id}/past-attempts`)}
+                        className="w-full btn-outline-primary"
+                    >
+                        📚 View Past Attempts
+                    </button>
+                )}
+            </div>
         </div>
     );
 };

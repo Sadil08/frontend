@@ -9,7 +9,7 @@ import { AttemptHistory } from '@/components/AttemptHistory';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { paperService } from '@/services/paperService';
 import { leaderboardService } from '@/services/leaderboardService';
-import { StudentPaperAttemptDto, LeaderboardEntryDto, PaperDto } from '@/types';
+import { AttemptHistoryItem, LeaderboardEntryDto, PaperDto } from '@/types';
 import { Tabs, message } from 'antd';
 
 const { TabPane } = Tabs;
@@ -24,7 +24,7 @@ export default function PaperDetailsPage() {
     const paperId = parseInt(params.id as string);
 
     const [paper, setPaper] = useState<PaperDto | null>(null);
-    const [attempts, setAttempts] = useState<StudentPaperAttemptDto[]>([]);
+    const [attempts, setAttempts] = useState<AttemptHistoryItem[]>([]);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingAttempts, setLoadingAttempts] = useState(false);
@@ -154,6 +154,17 @@ export default function PaperDetailsPage() {
                                         📝 Start New Attempt
                                     </button>
                                     <button
+                                        onClick={() => router.push(`/papers/${paperId}/past-attempts`)}
+                                        className="btn-outline-primary px-6"
+                                    >
+                                        📚 View Past Attempts
+                                        {attempts.length > 0 && (
+                                            <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                                                {attempts.length}
+                                            </span>
+                                        )}
+                                    </button>
+                                    <button
                                         onClick={() => {
                                             fetchAttemptHistory();
                                             fetchLeaderboard();
@@ -186,6 +197,7 @@ export default function PaperDetailsPage() {
                                         }
                                         key="history"
                                     >
+                                        <div id="attempt-history" className="mt-6">
                                         <div className="mt-6">
                                             <div className="mb-4">
                                                 <h2 className="text-xl font-semibold text-gray-900 mb-2">
@@ -200,6 +212,7 @@ export default function PaperDetailsPage() {
                                                 paperId={paperId}
                                                 loading={loadingAttempts}
                                             />
+                                        </div>
                                         </div>
                                     </TabPane>
 

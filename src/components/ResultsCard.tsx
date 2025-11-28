@@ -1,14 +1,14 @@
 "use client";
 
 import React from 'react';
-import { StudentAnswerDto } from '@/types';
+import { AttemptAnswer } from '@/types';
 
 /**
  * Props for ResultsCard component
  */
 interface ResultsCardProps {
     /** Answer data with AI feedback */
-    answer: StudentAnswerDto;
+    answer: AttemptAnswer;
     /** Question number for display */
     questionNumber: number;
 }

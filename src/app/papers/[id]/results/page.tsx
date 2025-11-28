@@ -9,7 +9,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { paperService } from '@/services/paperService';
 import { leaderboardService } from '@/services/leaderboardService';
-import { StudentPaperAttemptDto, LeaderboardEntryDto } from '@/types';
+import { AttemptDetails, LeaderboardEntryDto } from '@/types';
 import { message, Modal } from 'antd';
 
 /**
@@ -23,7 +23,7 @@ export default function PaperResultsPage() {
     const attemptId = searchParams.get('attemptId');
     const paperId = parseInt(params.id as string);
 
-    const [attempt, setAttempt] = useState<StudentPaperAttemptDto | null>(null);
+    const [attempt, setAttempt] = useState<AttemptDetails | null>(null);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntryDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingLeaderboard, setLoadingLeaderboard] = useState(false);
