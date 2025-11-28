@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Spin, message } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
-// import { paperService } from '@/services/paperService'; // removed, papers are fetched from bundle data
+import { paperService } from '@/services/paperService';
 import { bundleService } from '@/services/bundleService';
 import { PaperCard } from '@/components/PaperCard';
 import { PaperDto, PaperBundleDetailDto } from '@/types';
@@ -16,6 +16,7 @@ export default function BundlePapers() {
     const router = useRouter();
     const [papers, setPapers] = useState<PaperDto[]>([]);
     const [bundle, setBundle] = useState<PaperBundleDetailDto | null>(null);
+    const [attemptedPapers, setAttemptedPapers] = useState<Set<number>>(new Set());
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -23,7 +24,23 @@ export default function BundlePapers() {
             try {
                 const bundleData = await bundleService.getBundle(Number(id));
                 setBundle(bundleData);
-                setPapers(bundleData.papers || []);
+                const papersData = bundleData.papers || [];
+                setPapers(papersData);
+
+                // Check which papers have been attempted
+                const attempted = new Set<number>();
+                for (const paper of papersData) {
+                    try {
+                        const attempts = await paperService.getAttemptHistory(paper.id);
+                        if (attempts.length > 0) {
+                            attempted.add(paper.id);
+                        }
+                    } catch (err) {
+                        // If we can't check attempts, assume not attempted
+                        console.log(`Could not check attempts for paper ${paper.id}:`, err);
+                    }
+                }
+                setAttemptedPapers(attempted);
             } catch (error) {
                 message.error('Failed to load papers');
             } finally {
@@ -63,6 +80,7 @@ export default function BundlePapers() {
                             key={paper.id}
                             paper={paper}
                             attemptsRemaining={paper.maxFreeAttempts}
+                            hasAttempted={attemptedPapers.has(paper.id)}
                         />
                     ))}
                 </div>

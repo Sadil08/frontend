@@ -22,6 +22,7 @@ export default function BundleDetailPage() {
 
     const [bundle, setBundle] = useState<PaperBundleDto | null>(null);
     const [papers, setPapers] = useState<PaperDto[]>([]);
+    const [attemptedPapers, setAttemptedPapers] = useState<Set<number>>(new Set());
     const [hasAccess, setHasAccess] = useState(false);
     const [loading, setLoading] = useState(true);
     const [purchasing, setPurchasing] = useState(false);
@@ -46,6 +47,21 @@ export default function BundleDetailPage() {
                     // If purchased, fetch papers
                     const papersData = await paperService.getBundlePapers(bundleId);
                     setPapers(papersData);
+
+                    // Check which papers have been attempted
+                    const attempted = new Set<number>();
+                    for (const paper of papersData) {
+                        try {
+                            const attempts = await paperService.getAttemptHistory(paper.id);
+                            if (attempts.length > 0) {
+                                attempted.add(paper.id);
+                            }
+                        } catch (err) {
+                            // If we can't check attempts, assume not attempted
+                            console.log(`Could not check attempts for paper ${paper.id}:`, err);
+                        }
+                    }
+                    setAttemptedPapers(attempted);
                 }
             } catch (err) {
                 console.error('Error checking access:', err);
@@ -180,6 +196,7 @@ export default function BundleDetailPage() {
                                                     key={paper.id}
                                                     paper={paper}
                                                     attemptsRemaining={paper.maxFreeAttempts}
+                                                    hasAttempted={attemptedPapers.has(paper.id)}
                                                     disabled={false}
                                                 />
                                             ))}
