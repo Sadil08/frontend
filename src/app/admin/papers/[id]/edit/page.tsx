@@ -9,6 +9,15 @@ import { AdminPaperDto, QuestionCreateDto, AdminQuestionDto } from '@/types/admi
 import Header from '@/components/Header';
 import { MarksSummary } from '@/components/admin/MarksSummary';
 
+const BooleanButton = ({ value, onChange }: { value?: boolean; onChange?: (val: boolean) => void }) => (
+    <Button
+        type={value ? 'primary' : 'default'}
+        onClick={() => onChange?.(!value)}
+    >
+        ✓ Correct
+    </Button>
+);
+
 export default function PaperEditPage() {
     const params = useParams();
     const router = useRouter();
@@ -75,12 +84,29 @@ export default function PaperEditPage() {
 
     const handleSubmit = async (values: any) => {
         try {
+            let correctAnswerText = values.correctAnswerText;
+
+            // Sanitize options to only include necessary fields
+            let options = values.type === 'MCQ' ? (values.options || []).map((opt: any) => ({
+                id: opt.id,
+                text: opt.text,
+                isCorrect: !!opt.isCorrect // Ensure boolean
+            })) : [];
+
+            // For MCQs, derive correctAnswerText from the correct option
+            if (values.type === 'MCQ') {
+                const correctOption = options.find((opt: any) => opt.isCorrect);
+                if (correctOption) {
+                    correctAnswerText = correctOption.text;
+                }
+            }
+
             const questionData: QuestionCreateDto = {
                 text: values.text,
                 type: values.type,
-                correctAnswerText: values.correctAnswerText,
+                correctAnswerText: correctAnswerText,
                 marks: values.marks,
-                options: values.type === 'MCQ' ? values.options || [] : []
+                options: options
             };
 
             if (editingQuestion) {
@@ -93,9 +119,11 @@ export default function PaperEditPage() {
             setIsModalOpen(false);
             form.resetFields();
             fetchPaper();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to save question:', error);
-            message.error('Failed to save question');
+            // Try to show more specific error from backend if available
+            const errorMsg = error.response?.data?.message || 'Failed to save question';
+            message.error(errorMsg);
         }
     };
 
@@ -275,12 +303,9 @@ export default function PaperEditPage() {
                                                         <Form.Item
                                                             {...field}
                                                             name={[field.name, 'isCorrect']}
-                                                            valuePropName="checked"
                                                             className="mb-0"
                                                         >
-                                                            <Button type={form.getFieldValue(['options', field.name, 'isCorrect']) ? 'primary' : 'default'}>
-                                                                ✓ Correct
-                                                            </Button>
+                                                            <BooleanButton />
                                                         </Form.Item>
                                                         <Button danger onClick={() => remove(field.name)}>
                                                             Delete
