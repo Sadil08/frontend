@@ -5,7 +5,7 @@ import { Button, Modal, Form, Input, Select, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { ListTable } from '@/components/ListTable';
-import Header from '@/components/Header';
+
 
 export default function LessonManagementPage() {
     const [lessons, setLessons] = useState<any[]>([]);
@@ -50,6 +50,8 @@ export default function LessonManagementPage() {
         Modal.confirm({
             title: 'Delete Lesson',
             content: 'Are you sure?',
+            okText: 'Delete',
+            okType: 'danger',
             onOk: async () => {
                 try {
                     await adminService.deleteLesson(record.id);
@@ -79,51 +81,86 @@ export default function LessonManagementPage() {
     };
 
     const columns = [
-        { title: 'ID', dataIndex: 'id', key: 'id' },
-        { title: 'Name', dataIndex: 'name', key: 'name' },
-        { title: 'Description', dataIndex: 'description', key: 'description' },
+        {
+            title: 'ID',
+            dataIndex: 'id',
+            key: 'id',
+            width: 70
+        },
+        {
+            title: 'Name',
+            dataIndex: 'name',
+            key: 'name',
+            width: 200,
+            render: (text: string) => <span className="font-medium text-gray-900">{text}</span>
+        },
+        {
+            title: 'Description',
+            dataIndex: 'description',
+            key: 'description',
+            render: (text: string) => <span className="text-gray-600">{text}</span>
+        },
         {
             title: 'Subject',
             dataIndex: 'subjectId',
             key: 'subjectId',
-            render: (id: number) => subjects.find(s => s.id === id)?.name || id
+            width: 150,
+            render: (id: number) => {
+                const subject = subjects.find(s => s.id === id);
+                return subject ? <span className="text-primary-600 font-medium">{subject.name}</span> : id;
+            }
         },
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Header />
-            <div className="max-w-7xl mx-auto p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">Lesson Management</h1>
-                    <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} className="btn-primary">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 animate-slide-up">
+                    <div>
+                        <h1 className="text-3xl font-bold text-secondary-900">Lesson Management</h1>
+                        <p className="text-secondary-600 mt-1 text-lg">Manage lessons and their content</p>
+                    </div>
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleAdd}
+                        size="large"
+                        className="bg-primary-600 hover:bg-primary-700 border-none shadow-md"
+                    >
                         Add Lesson
                     </Button>
                 </div>
 
-                <ListTable
-                    data={lessons}
-                    columns={columns}
-                    loading={loading}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                />
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    <ListTable
+                        data={lessons}
+                        columns={columns}
+                        loading={loading}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                    />
+                </div>
 
                 <Modal
-                    title={editingId ? 'Edit Lesson' : 'Add Lesson'}
+                    title={<span className="text-xl font-bold text-gray-900">{editingId ? 'Edit Lesson' : 'Add Lesson'}</span>}
                     open={isModalOpen}
                     onCancel={() => setIsModalOpen(false)}
                     onOk={() => form.submit()}
+                    okText={editingId ? 'Update' : 'Create'}
+                    okButtonProps={{ className: "bg-primary-600 hover:bg-primary-700" }}
+                    centered
+                    className="rounded-xl overflow-hidden"
                 >
-                    <Form form={form} layout="vertical" onFinish={handleSubmit}>
+                    <Form form={form} layout="vertical" onFinish={handleSubmit} className="mt-4">
                         <Form.Item name="name" label="Name" rules={[{ required: true }]}>
-                            <Input />
+                            <Input placeholder="e.g., Introduction to Algebra" className="rounded-lg" />
                         </Form.Item>
                         <Form.Item name="description" label="Description">
-                            <Input.TextArea />
+                            <Input.TextArea rows={4} placeholder="Description of the lesson..." className="rounded-lg" />
                         </Form.Item>
                         <Form.Item name="subjectId" label="Subject" rules={[{ required: true }]}>
-                            <Select>
+                            <Select placeholder="Select a subject" className="rounded-lg">
                                 {subjects.map(s => (
                                     <Select.Option key={s.id} value={s.id}>{s.name}</Select.Option>
                                 ))}

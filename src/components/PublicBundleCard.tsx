@@ -26,34 +26,37 @@ export const PublicBundleCard: React.FC<PublicBundleCardProps> = ({ bundle }) =>
     return (
         <div
             onClick={handleClick}
-            className="card-interactive hover-lift animate-slide-up cursor-pointer group"
+            className="bg-white rounded-xl shadow-card hover:shadow-card-hover transition-all duration-300 transform hover:-translate-y-1 cursor-pointer group border border-secondary-200 flex flex-col h-full overflow-hidden"
         >
-            {/* Bundle Header */}
-            <div className="mb-4">
-                <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+            <div className="p-6 flex-grow">
+                <div className="flex gap-2 mb-4">
+                    <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-primary-50 text-primary-700 uppercase tracking-wide">
+                        {bundle.examType}
+                    </span>
+                    {bundle.isPastPaper && (
+                        <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 uppercase tracking-wide">
+                            Past Paper
+                        </span>
+                    )}
+                </div>
+
+                <h3 className="text-xl font-bold text-secondary-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
                     {bundle.name}
                 </h3>
-                <p className="text-gray-600 text-sm text-clamp-2">
+                <p className="text-secondary-600 text-sm line-clamp-3 mb-4">
                     {bundle.description}
                 </p>
             </div>
 
-            {/* Bundle Metadata */}
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-                <span className="badge-primary">{bundle.examType}</span>
-                <span className="badge-gray">{bundle.type}</span>
-                {bundle.isPastPaper && (
-                    <span className="badge-warning">📄 Past Paper</span>
-                )}
-            </div>
-
-            {/* Price Display */}
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="text-2xl font-bold text-green-600">
-                    ${typeof bundle.price === 'number' ? bundle.price.toFixed(2) : '0.00'}
+            <div className="px-6 py-4 bg-secondary-50 border-t border-secondary-100 flex items-center justify-between">
+                <div className="flex flex-col">
+                    <span className="text-xs text-secondary-500 font-medium uppercase">Price</span>
+                    <span className="text-lg font-bold text-green-600">
+                        ${typeof bundle.price === 'number' ? bundle.price.toFixed(2) : '0.00'}
+                    </span>
                 </div>
-                <button className="btn-primary text-sm px-4 py-2">
-                    View Papers →
+                <button className="text-sm font-semibold text-primary-600 group-hover:translate-x-1 transition-transform flex items-center">
+                    View Details <span className="ml-1">→</span>
                 </button>
             </div>
         </div>

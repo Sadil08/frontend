@@ -147,7 +147,7 @@ export default function PastAttemptsPage() {
     return (
         <ProtectedRoute role="STUDENT">
             <div className="page-wrapper">
-                <Header />
+
 
                 <div className="page-content max-w-6xl mx-auto">
                     {/* Breadcrumb Navigation */}
@@ -275,10 +275,10 @@ export default function PastAttemptsPage() {
                                                                 Attempt {attempt.attemptNumber}
                                                             </Title>
                                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${attempt.status === 'SUBMITTED'
-                                                                    ? 'bg-green-100 text-green-800'
-                                                                    : attempt.status === 'IN_PROGRESS'
-                                                                        ? 'bg-blue-100 text-blue-800'
-                                                                        : 'bg-red-100 text-red-800'
+                                                                ? 'bg-green-100 text-green-800'
+                                                                : attempt.status === 'IN_PROGRESS'
+                                                                    ? 'bg-blue-100 text-blue-800'
+                                                                    : 'bg-red-100 text-red-800'
                                                                 }`}>
                                                                 {attempt.status}
                                                             </span>
@@ -330,8 +330,8 @@ export default function PastAttemptsPage() {
                                                         <div className="w-20 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
                                                             <div
                                                                 className={`h-full rounded-full transition-all duration-500 ${percentage >= 80 ? 'bg-green-500' :
-                                                                        percentage >= 60 ? 'bg-blue-500' :
-                                                                            percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                    percentage >= 60 ? 'bg-blue-500' :
+                                                                        percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
                                                                     }`}
                                                                 style={{ width: `${Math.min(100, percentage)}%` }}
                                                             />

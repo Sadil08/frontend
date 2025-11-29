@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, Button, Spin, message, Typography, Empty } from 'antd';
 import { ArrowLeftOutlined, TrophyOutlined } from '@ant-design/icons';
-import Header from '@/components/Header';
+
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
 import { leaderboardService } from '@/services/leaderboardService';
@@ -72,7 +72,7 @@ export default function PaperLeaderboardPage() {
         return (
             <ProtectedRoute role="STUDENT">
                 <div className="page-wrapper">
-                    <Header />
+
                     <div className="page-content">
                         <div className="flex items-center justify-center h-96">
                             <div className="text-center">
@@ -93,7 +93,7 @@ export default function PaperLeaderboardPage() {
         return (
             <ProtectedRoute role="STUDENT">
                 <div className="page-wrapper">
-                    <Header />
+
                     <div className="page-content max-w-4xl mx-auto">
                         <Card className="card-base text-center">
                             <div className="py-8">
@@ -120,7 +120,7 @@ export default function PaperLeaderboardPage() {
     return (
         <ProtectedRoute role="STUDENT">
             <div className="page-wrapper">
-                <Header />
+
 
                 <div className="page-content max-w-6xl mx-auto">
                     {/* Breadcrumb Navigation */}

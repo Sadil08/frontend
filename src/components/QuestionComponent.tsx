@@ -27,12 +27,12 @@ export const QuestionComponent: React.FC<QuestionComponentProps> = ({
     index
 }) => {
     return (
-        <div className="card mb-6">
-            <div className="flex gap-4 mb-4">
-                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-700 rounded-full font-bold">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 transition-all hover:shadow-md">
+            <div className="flex gap-4 mb-6">
+                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-primary-50 text-primary-700 rounded-full font-bold text-sm border border-primary-100">
                     {index + 1}
                 </span>
-                <div className="text-lg font-medium text-gray-800 pt-1">
+                <div className="text-lg font-medium text-secondary-900 pt-0.5 leading-relaxed">
                     {question.text}
                 </div>
             </div>
@@ -40,25 +40,30 @@ export const QuestionComponent: React.FC<QuestionComponentProps> = ({
             <div className="pl-12">
                 {question.type === 'MCQ' ? (
                     <Radio.Group onChange={(e) => onChange(e.target.value)} value={value} className="w-full">
-                        <Space direction="vertical" className="w-full">
+                        <Space direction="vertical" className="w-full gap-3">
                             {question.options?.map((option) => (
                                 <Radio
                                     key={option.id}
                                     value={option.id}
-                                    className="w-full p-3 border border-gray-200 rounded-lg hover:bg-blue-50 transition-colors"
+                                    className={`w-full p-4 border rounded-xl transition-all duration-200 flex items-center ${value === option.id
+                                            ? 'border-primary-500 bg-primary-50 shadow-sm'
+                                            : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                                        }`}
                                 >
-                                    {option.text}
+                                    <span className={`text-base ${value === option.id ? 'text-primary-900 font-medium' : 'text-secondary-700'}`}>
+                                        {option.text}
+                                    </span>
                                 </Radio>
                             ))}
                         </Space>
                     </Radio.Group>
                 ) : (
                     <Input.TextArea
-                        rows={6}
+                        rows={8}
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         placeholder="Type your answer here..."
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        className="w-full p-4 text-base border-gray-300 rounded-xl focus:border-primary-500 focus:ring-1 focus:ring-primary-500 hover:border-gray-400 transition-colors resize-y min-h-[150px]"
                     />
                 )}
             </div>

@@ -100,7 +100,7 @@ export default function BundleDetailPage() {
     return (
         <ProtectedRoute role="STUDENT">
             <div className="page-wrapper">
-                <Header />
+
 
                 <div className="page-content">
                     <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6 animate-slide-up">

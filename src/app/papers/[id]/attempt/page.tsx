@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Header from '@/components/Header';
+
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { FullPaper } from '@/components/FullPaper';
 import { QuestionSkeleton } from '@/components/LoadingSkeleton';
@@ -97,27 +97,30 @@ export default function PaperAttemptPage() {
     return (
         <ProtectedRoute role="STUDENT">
             <div className="page-wrapper">
-                <Header />
 
-                <div className="page-content">
+
+                <div className="page-content max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     {/* Breadcrumb */}
-                    <nav className="flex items-center gap-2 text-sm text-gray-600 mb-6 animate-slide-up">
+                    <nav className="flex items-center gap-2 text-sm text-secondary-500 mb-8 animate-slide-up">
                         <button
                             onClick={() => router.push('/dashboard')}
-                            className="hover:text-blue-600 transition-colors"
+                            className="hover:text-primary-600 transition-colors flex items-center gap-1"
                         >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
                             Dashboard
                         </button>
-                        <span>/</span>
-                        <span className="text-gray-900 font-medium">
+                        <span className="text-gray-300">/</span>
+                        <span className="text-secondary-900 font-medium truncate max-w-[200px] sm:max-w-md">
                             {paperData?.name || 'Paper Attempt'}
                         </span>
                     </nav>
 
                     {/* Loading State */}
                     {loading && (
-                        <div className="space-y-6">
-                            <div className="skeleton h-32 w-full rounded-lg" />
+                        <div className="space-y-8">
+                            <div className="animate-pulse bg-white rounded-xl h-48 w-full shadow-sm border border-gray-200" />
                             <QuestionSkeleton />
                             <QuestionSkeleton />
                             <QuestionSkeleton />
@@ -126,17 +129,23 @@ export default function PaperAttemptPage() {
 
                     {/* Error State */}
                     {error && !loading && (
-                        <div className="card-base p-8 text-center bg-red-50 border-red-200">
-                            <svg className="w-16 h-16 text-red-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-10 text-center max-w-2xl mx-auto mt-10">
+                            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-2xl font-bold text-gray-900 mb-3">
                                 Failed to Load Paper
                             </h3>
-                            <p className="text-gray-600 mb-4">{error}</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-gray-600 mb-6 text-lg">{error}</p>
+                            <div className="flex items-center justify-center gap-2 text-primary-600 font-medium animate-pulse">
+                                <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
                                 Redirecting to dashboard...
-                            </p>
+                            </div>
                         </div>
                     )}
 
