@@ -21,6 +21,8 @@ export const leaderboardService = {
       rank: index + 1,
       studentName: entry.userId === currentUserId ? 'You' : entry.studentName,
       marks: entry.marks,
+      paperTotalMarks: entry.paperTotalMarks,
+      percentage: entry.percentage,
       timeTaken: entry.timeTaken,
       userId: entry.userId || 0, // Provide default value for undefined userId
       isCurrentUser: entry.userId === currentUserId

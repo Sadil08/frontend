@@ -41,10 +41,7 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
     };
 
     const calculatePercentage = (attempt: AttemptHistoryItem): number => {
-        // For summary view, we'll use a placeholder calculation
-        // In a real implementation, you might want to pass total possible marks as a prop
-        // or calculate it differently. For now, assume 20 marks as maximum.
-        const totalPossible = 20; // This should be dynamic based on paper data
+        const totalPossible = attempt.paperTotalMarks || 100; // Fallback to 100 if not set
         return totalPossible > 0 ? (attempt.totalMarks / totalPossible) * 100 : 0;
     };
 
@@ -177,18 +174,17 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
                                     <div className="text-center">
                                         <div className="text-4xl font-bold text-gray-900 mb-1">
                                             {attempt.totalMarks}
-                                            <span className="text-xl text-gray-500">/20</span>
+                                            <span className="text-xl text-gray-500">/{attempt.paperTotalMarks || '?'}</span>
                                         </div>
                                         <div className={`text-lg font-bold ${getPerformanceColor(percentage)} mb-2`}>
                                             {percentage.toFixed(0)}%
                                         </div>
                                         <div className="w-20 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
                                             <div
-                                                className={`h-full rounded-full transition-all duration-500 ${
-                                                    percentage >= 80 ? 'bg-green-500' :
-                                                    percentage >= 60 ? 'bg-blue-500' :
-                                                    percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                                                }`}
+                                                className={`h-full rounded-full transition-all duration-500 ${percentage >= 80 ? 'bg-green-500' :
+                                                        percentage >= 60 ? 'bg-blue-500' :
+                                                            percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                    }`}
                                                 style={{ width: `${Math.min(100, percentage)}%` }}
                                             />
                                         </div>

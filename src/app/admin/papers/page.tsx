@@ -52,6 +52,7 @@ export default function PaperManagementPage() {
             description: record.description,
             type: record.type,
             maxFreeAttempts: record.maxFreeAttempts,
+            totalMarks: record.totalMarks,
             bundleId: record.bundleId
         });
         setIsModalOpen(true);
@@ -87,6 +88,7 @@ export default function PaperManagementPage() {
                 description: values.description,
                 type: values.type,
                 maxFreeAttempts: values.maxFreeAttempts || 3,
+                totalMarks: values.totalMarks || undefined,
                 bundleId: values.bundleId || undefined
             };
 
@@ -145,6 +147,14 @@ export default function PaperManagementPage() {
             key: 'questions',
             width: 100,
             render: (_: any, record: AdminPaperDto) => record.questions.length
+        },
+        {
+            title: 'Total Marks',
+            dataIndex: 'totalMarks',
+            key: 'totalMarks',
+            width: 110,
+            render: (marks: number | null | undefined) =>
+                marks ? <Tag color="blue">{marks}</Tag> : <Tag color="orange">Not Set</Tag>
         },
         {
             title: 'Max Attempts',
@@ -292,6 +302,18 @@ export default function PaperManagementPage() {
                                     </Select.Option>
                                 ))}
                             </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="totalMarks"
+                            label="Total Marks"
+                            rules={[
+                                { required: true, message: 'Total marks is required' },
+                                { type: 'number', min: 1, message: 'Total marks must be at least 1' }
+                            ]}
+                            initialValue={100}
+                            tooltip="Total marks for this paper. Final scores will be scaled to this value based on question marks."
+                        >
+                            <InputNumber min={1} className="w-full" placeholder="e.g., 100" />
                         </Form.Item>
                         <Form.Item
                             name="maxFreeAttempts"

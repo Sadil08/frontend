@@ -7,6 +7,7 @@ import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@
 import { adminService } from '@/services/adminService';
 import { AdminPaperDto, QuestionCreateDto, AdminQuestionDto } from '@/types/admin';
 import Header from '@/components/Header';
+import { MarksSummary } from '@/components/admin/MarksSummary';
 
 export default function PaperEditPage() {
     const params = useParams();
@@ -129,6 +130,9 @@ export default function PaperEditPage() {
                         <Tag color="orange">Avg Score: {paper.averageScore.toFixed(1)}%</Tag>
                     </div>
                 </div>
+
+                {/* Marks Allocation Summary */}
+                <MarksSummary paper={paper} />
 
                 <Card
                     title="Questions"

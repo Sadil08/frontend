@@ -13,7 +13,10 @@ export interface AttemptHistoryItem {
     status: string;
     completedAt: string;
     timeTakenMinutes: number;
+    /** Final weighted score (scaled based on paper's totalMarks) */
     totalMarks: number;
+    /** Paper's configured total marks (for percentage calculation) */
+    paperTotalMarks?: number;
     overallFeedbackSummary: string;
 }
 
@@ -49,7 +52,10 @@ export interface AttemptDetails {
     startedAt: string;
     completedAt: string;
     timeTakenMinutes: number;
+    /** Final weighted score (scaled based on paper's totalMarks) */
     totalMarks: number;
+    /** Paper's configured total marks (for percentage calculation) */
+    paperTotalMarks?: number;
     overallFeedback: string;
     answers: AttemptAnswer[];
 }

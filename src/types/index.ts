@@ -70,6 +70,8 @@ export interface PaperDto {
   bundleId: number;
   type: 'MCQ' | 'ESSAY' | 'MIXED';
   maxFreeAttempts: number;
+  /** Total marks for the paper (used for weighted scoring) */
+  totalMarks?: number;
 }
 
 /**
@@ -100,6 +102,8 @@ export interface PaperAttemptDto {
   description: string;
   type: string;
   maxFreeAttempts: number;
+  /** Total marks for the paper (used for weighted scoring) */
+  totalMarks?: number;
   questions: QuestionAttemptDto[];
 }
 
@@ -153,7 +157,10 @@ export interface StudentPaperAttemptDto {
   completedAt?: string;
   timeTakenMinutes?: number;
   overallFeedback: string | null;
+  /** Final weighted score (calculated by backend based on paper's totalMarks) */
   totalMarks: number | null;
+  /** Total marks configured for the paper (for percentage calculation) */
+  paperTotalMarks?: number;
   answers: StudentAnswerDto[];
 }
 
@@ -219,6 +226,8 @@ export interface ProgressDto {
 export interface LeaderboardEntryDto {
   studentName: string;
   marks: number;
+  paperTotalMarks?: number;
+  percentage?: number;
   timeTaken: number;
   isAnonymous?: boolean;
   userId?: number;

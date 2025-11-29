@@ -51,11 +51,18 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       title: 'Score',
       dataIndex: 'marks',
       key: 'marks',
-      width: 120,
-      render: (marks: number) => (
-        <span className="font-bold text-lg text-gray-900">
-          {marks}/100
-        </span>
+      width: 150,
+      render: (marks: number, record: LeaderboardEntry) => (
+        <div className="flex flex-col">
+          <span className="font-bold text-lg text-gray-900">
+            {marks}/{record.paperTotalMarks || 100}
+          </span>
+          {record.percentage !== undefined && (
+            <span className="text-sm text-gray-500">
+              {record.percentage.toFixed(1)}%
+            </span>
+          )}
+        </div>
       ),
       sorter: (a: LeaderboardEntry, b: LeaderboardEntry) => b.marks - a.marks
     },
@@ -114,7 +121,8 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
               <Table.Summary.Row>
                 <Table.Summary.Cell index={0} colSpan={4}>
                   <div className="sr-only" aria-live="assertive">
-                    Your current ranking is {userEntry.rank} out of {entries.length} participants with a score of {userEntry.marks} out of 100.
+                    Your current ranking is {userEntry.rank} out of {entries.length} participants with a score of {userEntry.marks} out of {userEntry.paperTotalMarks || 100}
+                    {userEntry.percentage !== undefined && ` (${userEntry.percentage.toFixed(1)}%)`}.
                   </div>
                 </Table.Summary.Cell>
               </Table.Summary.Row>

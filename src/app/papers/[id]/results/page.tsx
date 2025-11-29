@@ -106,7 +106,7 @@ export default function PaperResultsPage() {
 
     const getPerformancePercentage = () => {
         if (!attempt || !attempt.totalMarks) return 0;
-        const totalPossible = attempt.answers.reduce((sum, ans) => sum + ans.marksAvailable, 0);
+        const totalPossible = attempt.paperTotalMarks || 100; // Use paper's total marks, fallback to 100
         return totalPossible > 0 ? (attempt.totalMarks / totalPossible) * 100 : 0;
     };
 
@@ -161,7 +161,7 @@ export default function PaperResultsPage() {
                                         <div className="text-center">
                                             <div className="text-6xl font-bold text-gray-900 mb-2">
                                                 {attempt.totalMarks}
-                                                <span className="text-3xl text-gray-500">/{attempt.answers.reduce((sum, ans) => sum + ans.marksAvailable, 0)}</span>
+                                                <span className="text-3xl text-gray-500">/{attempt.paperTotalMarks || 100}</span>
                                             </div>
                                             <div className="text-xl text-gray-600">{performancePercentage.toFixed(1)}%</div>
                                         </div>

@@ -79,7 +79,7 @@ export default function PastAttemptsPage() {
     };
 
     const calculatePercentage = (attempt: AttemptHistoryItem): number => {
-        const totalPossible = 20; // This should be dynamic based on paper data
+        const totalPossible = attempt.paperTotalMarks || 100; // Use paper's total marks, fallback to 100
         return totalPossible > 0 ? (attempt.totalMarks / totalPossible) * 100 : 0;
     };
 
@@ -190,7 +190,11 @@ export default function PastAttemptsPage() {
 
                                     <div className="stat-box">
                                         <div className="text-3xl font-bold text-green-600 mb-1">
-                                            {attempts.filter(a => a.totalMarks >= 15).length}
+                                            {attempts.filter(a => {
+                                                const paperTotal = a.paperTotalMarks || 100;
+                                                const percentage = (a.totalMarks / paperTotal) * 100;
+                                                return percentage >= 75;
+                                            }).length}
                                         </div>
                                         <div className="text-sm text-gray-600">High Scores (75%+)</div>
                                     </div>
@@ -270,13 +274,12 @@ export default function PastAttemptsPage() {
                                                             <Title level={4} className="mb-0">
                                                                 Attempt {attempt.attemptNumber}
                                                             </Title>
-                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                                                                attempt.status === 'SUBMITTED'
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${attempt.status === 'SUBMITTED'
                                                                     ? 'bg-green-100 text-green-800'
                                                                     : attempt.status === 'IN_PROGRESS'
-                                                                    ? 'bg-blue-100 text-blue-800'
-                                                                    : 'bg-red-100 text-red-800'
-                                                            }`}>
+                                                                        ? 'bg-blue-100 text-blue-800'
+                                                                        : 'bg-red-100 text-red-800'
+                                                                }`}>
                                                                 {attempt.status}
                                                             </span>
                                                             {index === 0 && (
@@ -319,18 +322,17 @@ export default function PastAttemptsPage() {
                                                     <div className="text-center">
                                                         <div className="text-4xl font-bold text-gray-900 mb-1">
                                                             {attempt.totalMarks}
-                                                            <span className="text-xl text-gray-500">/20</span>
+                                                            <span className="text-xl text-gray-500">/{attempt.paperTotalMarks || 100}</span>
                                                         </div>
                                                         <div className={`text-lg font-bold ${getPerformanceColor(percentage)} mb-2`}>
                                                             {percentage.toFixed(0)}%
                                                         </div>
                                                         <div className="w-20 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
                                                             <div
-                                                                className={`h-full rounded-full transition-all duration-500 ${
-                                                                    percentage >= 80 ? 'bg-green-500' :
-                                                                    percentage >= 60 ? 'bg-blue-500' :
-                                                                    percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
-                                                                }`}
+                                                                className={`h-full rounded-full transition-all duration-500 ${percentage >= 80 ? 'bg-green-500' :
+                                                                        percentage >= 60 ? 'bg-blue-500' :
+                                                                            percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                    }`}
                                                                 style={{ width: `${Math.min(100, percentage)}%` }}
                                                             />
                                                         </div>

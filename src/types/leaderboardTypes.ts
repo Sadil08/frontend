@@ -11,6 +11,10 @@ export interface LeaderboardEntry {
     rank: number;
     studentName: string;
     marks: number;
+    /** Paper's configured total marks (for display as "marks/paperTotalMarks") */
+    paperTotalMarks?: number;
+    /** Calculated percentage: (marks / paperTotalMarks) × 100 */
+    percentage?: number;
     timeTaken: number;
     userId: number;
     isCurrentUser?: boolean;
