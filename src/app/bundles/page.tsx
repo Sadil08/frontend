@@ -90,7 +90,10 @@ export default function Home() {
   };
 
   const handleFilterChange = (newFilters: BundleFilterParams) => {
+    console.log('handleFilterChange called with:', newFilters);
+    console.log('Previous filterState:', filterState);
     setFilterState(newFilters);
+    console.log('setFilterState called');
   };
 
   const handleClearFilters = () => {

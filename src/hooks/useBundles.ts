@@ -57,9 +57,16 @@ export const useBundles = (filters?: BundleFilterParams) => {
 
     // Only fetch if filters have actually changed
     const filtersString = JSON.stringify(filters || {});
+    console.log('useBundles effect - filtersRef.current:', filtersRef.current);
+    console.log('useBundles effect - filtersString:', filtersString);
+    console.log('useBundles effect - filters object:', filters);
+
     if (filtersRef.current !== filtersString) {
+      console.log('Filters changed! Fetching bundles...');
       filtersRef.current = filtersString;
       fetchBundles();
+    } else {
+      console.log('Filters unchanged, skipping fetch');
     }
   }, [filters]);
 

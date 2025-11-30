@@ -52,8 +52,20 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
     }, []);
 
     useEffect(() => {
+        console.log('Filter effect triggered:', {
+            subjectId: filters.subjectId,
+            subjectIdType: typeof filters.subjectId,
+            allLessonsCount: allLessons.length,
+            sampleLesson: allLessons[0]
+        });
+
         if (filters.subjectId) {
-            setFilteredLessons(allLessons.filter(l => l.subjectId === filters.subjectId));
+            const filtered = allLessons.filter(l => {
+                console.log('Comparing:', l.subjectId, '===', filters.subjectId, ':', l.subjectId === filters.subjectId);
+                return l.subjectId === filters.subjectId;
+            });
+            console.log('Filtered lessons:', filtered);
+            setFilteredLessons(filtered);
         } else {
             setFilteredLessons([]);
         }
@@ -117,10 +129,11 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                 </label>
                 <Select
                     placeholder="All Subjects"
-                    value={filters.subjectId}
+                    value={filters.subjectId || undefined}
                     onChange={(value) => {
-                        handleFilterChange('subjectId', value);
-                        handleFilterChange('lessonId', undefined); // Reset lesson when subject changes
+                        console.log('Subject changed to:', value);
+                        // Update both subjectId and reset lessonId in a single call
+                        onFilterChange({ ...filters, subjectId: value, lessonId: undefined });
                     }}
                     className="w-full"
                     size="large"
@@ -139,8 +152,11 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                 </label>
                 <Select
                     placeholder={filters.subjectId ? "All Lessons" : "Select a Subject first"}
-                    value={filters.lessonId}
-                    onChange={(value) => handleFilterChange('lessonId', value)}
+                    value={filters.lessonId || undefined}
+                    onChange={(value) => {
+                        console.log('Lesson changed to:', value);
+                        handleFilterChange('lessonId', value);
+                    }}
                     className="w-full"
                     size="large"
                     allowClear
