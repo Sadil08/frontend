@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getBundles } from '@/services/bundleService';
 import { PaperBundleSummaryDto } from '@/types';
+import { BundleFilterParams } from '@/services/bundleService';
 
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
@@ -12,7 +13,7 @@ interface CacheEntry {
 
 let bundleCache: CacheEntry | null = null;
 
-export const useBundles = (filters?: Record<string, string | number>) => {
+export const useBundles = (filters?: BundleFilterParams) => {
   const [bundles, setBundles] = useState<PaperBundleSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
   const filtersRef = useRef<string>('');

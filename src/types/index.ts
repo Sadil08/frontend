@@ -34,6 +34,8 @@ export interface PaperBundleSummaryDto {
   price: number;
   type: 'MCQ' | 'ESSAY' | 'MIXED';
   examType: string;
+  subjectId?: number;
+  lessonId?: number;
   isPastPaper: boolean;
 }
 

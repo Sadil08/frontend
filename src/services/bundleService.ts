@@ -2,17 +2,53 @@ import apiClient from '@/utils/apiClient';
 import { PaperBundleDetailDto, PaperBundleSummaryDto, StudentBundleAccess } from '@/types';
 
 /**
+ * Filter parameters for bundle queries
+ */
+export interface BundleFilterParams {
+  type?: 'MCQ' | 'ESSAY' | 'MIXED';
+  examType?: string;
+  subjectId?: number;
+  lessonId?: number;
+  isPastPaper?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  name?: string;
+}
+
+/**
  * Service for managing paper bundles
  * Handles bundle retrieval, purchase, and student access
  */
 export const bundleService = {
   /**
-   * Get all public bundles with optional filters
+   * Filter bundles by multiple criteria using the new filter endpoint
+   * @param filters - Optional filter parameters
+   * @returns Array of bundle summaries matching the filters
+   */
+  filterBundles: async (filters?: BundleFilterParams): Promise<PaperBundleSummaryDto[]> => {
+    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles/filter', { params: filters });
+    return response.data;
+  },
+
+  /**
+   * Search bundles by name using case-insensitive partial matching
+   * @param name - Search term
+   * @returns Array of bundle summaries matching the search term
+   */
+  searchBundles: async (name: string): Promise<PaperBundleSummaryDto[]> => {
+    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles/search', {
+      params: { name }
+    });
+    return response.data;
+  },
+
+  /**
+   * Get all public bundles with optional filters (uses filter endpoint)
    * @param filters - Optional query parameters for filtering
    * @returns Array of bundle summaries
    */
-  getBundles: async (filters?: Record<string, string | number>): Promise<PaperBundleSummaryDto[]> => {
-    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles', { params: filters });
+  getBundles: async (filters?: BundleFilterParams): Promise<PaperBundleSummaryDto[]> => {
+    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles/filter', { params: filters });
     return response.data;
   },
 
@@ -46,6 +82,8 @@ export const bundleService = {
 };
 
 // Named exports for backward compatibility
+export const filterBundles = bundleService.filterBundles;
+export const searchBundles = bundleService.searchBundles;
 export const getBundles = bundleService.getBundles;
 export const getBundle = bundleService.getBundle;
 export const getMyBundles = bundleService.getMyBundles;

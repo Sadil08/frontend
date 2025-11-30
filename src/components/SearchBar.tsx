@@ -21,10 +21,12 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
       placeholder="Search bundles, papers, or topics..."
       value={query}
       onChange={(e) => setQuery(e.target.value)}
-      prefix={<SearchOutlined className="text-gray-400" />}
-      className="w-full max-w-md rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 shadow-sm transition-all duration-200 py-2"
+      prefix={<SearchOutlined className={query ? "text-primary-600" : "text-gray-400"} />}
+      className={`w-full max-w-md rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 shadow-sm transition-all duration-200 py-2 ${query ? 'border-primary-500' : ''
+        }`}
       size="large"
       allowClear
+      onClear={() => setQuery('')}
     />
   );
 };
