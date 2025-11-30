@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Select, Slider, Checkbox, Button, Badge, Drawer } from 'antd';
 import { FilterOutlined, CloseOutlined } from '@ant-design/icons';
-import { BundleFilterParams } from '@/services/bundleService';
+import { BundleFilterParams, getSubjects, getLessons } from '@/services/bundleService';
+import { SubjectDto, LessonDto } from '@/types';
 
 interface BundleFiltersProps {
     filters: BundleFilterParams;
@@ -30,6 +31,33 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
     isMobile = false,
 }) => {
     const [drawerVisible, setDrawerVisible] = useState(false);
+    const [subjects, setSubjects] = useState<SubjectDto[]>([]);
+    const [allLessons, setAllLessons] = useState<LessonDto[]>([]);
+    const [filteredLessons, setFilteredLessons] = useState<LessonDto[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [subjectsData, lessonsData] = await Promise.all([
+                    getSubjects(),
+                    getLessons()
+                ]);
+                setSubjects(subjectsData);
+                setAllLessons(lessonsData);
+            } catch (error) {
+                console.error('Failed to fetch filter data:', error);
+            }
+        };
+        fetchData();
+    }, []);
+
+    useEffect(() => {
+        if (filters.subjectId) {
+            setFilteredLessons(allLessons.filter(l => l.subjectId === filters.subjectId));
+        } else {
+            setFilteredLessons([]);
+        }
+    }, [filters.subjectId, allLessons]);
 
     const handleFilterChange = (key: keyof BundleFilterParams, value: any) => {
         onFilterChange({ ...filters, [key]: value });
@@ -90,18 +118,17 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                 <Select
                     placeholder="All Subjects"
                     value={filters.subjectId}
-                    onChange={(value) => handleFilterChange('subjectId', value)}
+                    onChange={(value) => {
+                        handleFilterChange('subjectId', value);
+                        handleFilterChange('lessonId', undefined); // Reset lesson when subject changes
+                    }}
                     className="w-full"
                     size="large"
                     allowClear
                 >
-                    <Select.Option value={1}>Mathematics</Select.Option>
-                    <Select.Option value={2}>Science</Select.Option>
-                    <Select.Option value={3}>English</Select.Option>
-                    <Select.Option value={4}>History</Select.Option>
-                    <Select.Option value={5}>Physics</Select.Option>
-                    <Select.Option value={6}>Chemistry</Select.Option>
-                    <Select.Option value={7}>Biology</Select.Option>
+                    {subjects.map(subject => (
+                        <Select.Option key={subject.id} value={subject.id}>{subject.name}</Select.Option>
+                    ))}
                 </Select>
             </div>
 
@@ -111,7 +138,7 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                     Lesson
                 </label>
                 <Select
-                    placeholder="All Lessons"
+                    placeholder={filters.subjectId ? "All Lessons" : "Select a Subject first"}
                     value={filters.lessonId}
                     onChange={(value) => handleFilterChange('lessonId', value)}
                     className="w-full"
@@ -119,11 +146,9 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                     allowClear
                     disabled={!filters.subjectId}
                 >
-                    <Select.Option value={1}>Algebra</Select.Option>
-                    <Select.Option value={2}>Geometry</Select.Option>
-                    <Select.Option value={3}>Calculus</Select.Option>
-                    <Select.Option value={4}>Statistics</Select.Option>
-                    <Select.Option value={5}>Trigonometry</Select.Option>
+                    {filteredLessons.map(lesson => (
+                        <Select.Option key={lesson.id} value={lesson.id}>{lesson.name}</Select.Option>
+                    ))}
                 </Select>
             </div>
 

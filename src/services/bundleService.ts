@@ -1,5 +1,5 @@
 import apiClient from '@/utils/apiClient';
-import { PaperBundleDetailDto, PaperBundleSummaryDto, StudentBundleAccess } from '@/types';
+import { PaperBundleDetailDto, PaperBundleSummaryDto, StudentBundleAccess, SubjectDto, LessonDto } from '@/types';
 
 /**
  * Filter parameters for bundle queries
@@ -78,6 +78,24 @@ export const bundleService = {
    */
   purchaseBundle: async (id: number): Promise<void> => {
     await apiClient.post(`/api/paper-bundles/${id}/purchase`);
+  },
+
+  /**
+   * Get all subjects
+   * @returns Array of subjects
+   */
+  getSubjects: async (): Promise<SubjectDto[]> => {
+    const response = await apiClient.get<SubjectDto[]>('/api/subjects');
+    return response.data;
+  },
+
+  /**
+   * Get all lessons
+   * @returns Array of lessons
+   */
+  getLessons: async (): Promise<LessonDto[]> => {
+    const response = await apiClient.get<LessonDto[]>('/api/lessons');
+    return response.data;
   }
 };
 
@@ -88,3 +106,5 @@ export const getBundles = bundleService.getBundles;
 export const getBundle = bundleService.getBundle;
 export const getMyBundles = bundleService.getMyBundles;
 export const purchaseBundle = bundleService.purchaseBundle;
+export const getSubjects = bundleService.getSubjects;
+export const getLessons = bundleService.getLessons;
