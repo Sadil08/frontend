@@ -16,11 +16,37 @@ interface PublicBundleCardProps {
  * PublicBundleCard Component
  * Displays bundle information for public listings (no purchase data)
  */
+import { useCart } from '@/context/CartContext';
+import { Button, message } from 'antd';
+import { ShoppingCartOutlined, CheckOutlined } from '@ant-design/icons';
+
+/**
+ * PublicBundleCard Component
+ * Displays bundle information for public listings (no purchase data)
+ */
 export const PublicBundleCard: React.FC<PublicBundleCardProps> = ({ bundle }) => {
     const router = useRouter();
+    const { addToCart, items } = useCart();
 
     const handleClick = () => {
         router.push(`/bundles/${bundle.id}/papers`);
+    };
+
+    const isInCart = items.some(item => item.id === bundle.id);
+
+    const handleAddToCart = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isInCart) {
+            router.push('/cart');
+            return;
+        }
+
+        await addToCart({
+            id: bundle.id,
+            name: bundle.name,
+            price: typeof bundle.price === 'number' ? bundle.price : 0,
+            description: bundle.description
+        });
     };
 
     return (
@@ -55,9 +81,14 @@ export const PublicBundleCard: React.FC<PublicBundleCardProps> = ({ bundle }) =>
                         ${typeof bundle.price === 'number' ? bundle.price.toFixed(2) : '0.00'}
                     </span>
                 </div>
-                <button className="text-sm font-semibold text-primary-600 group-hover:translate-x-1 transition-transform flex items-center">
-                    View Details <span className="ml-1">→</span>
-                </button>
+                <Button
+                    type={isInCart ? "default" : "primary"}
+                    icon={isInCart ? <CheckOutlined /> : <ShoppingCartOutlined />}
+                    onClick={handleAddToCart}
+                    className={`flex items-center ${isInCart ? 'text-green-600 border-green-600 hover:text-green-700 hover:border-green-700' : 'bg-primary-600 hover:bg-primary-700 border-none'}`}
+                >
+                    {isInCart ? 'In Cart' : 'Add to Cart'}
+                </Button>
             </div>
         </div>
     );

@@ -3,11 +3,14 @@
 import { Button, Dropdown, MenuProps, Avatar } from 'antd';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import { useCart } from '@/context/CartContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, TrophyOutlined, BarChartOutlined } from '@ant-design/icons';
+import { Badge } from 'antd';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
+  const { cartCount } = useCart();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -65,8 +68,10 @@ const Header: React.FC = () => {
             {user ? (
               <>
                 {user.role === 'STUDENT' && (
-                  <Link href="/cart" className="text-secondary-500 hover:text-primary-600 transition-colors relative">
-                    <ShoppingCartOutlined style={{ fontSize: '20px' }} />
+                  <Link href="/cart" className="text-secondary-500 hover:text-primary-600 transition-colors relative mr-4">
+                    <Badge count={cartCount} size="small" offset={[0, 0]}>
+                      <ShoppingCartOutlined style={{ fontSize: '20px' }} />
+                    </Badge>
                   </Link>
                 )}
                 <Dropdown menu={{ items: menuItems }} placement="bottomRight" arrow>

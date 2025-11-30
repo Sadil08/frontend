@@ -1,111 +1,158 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useCart } from '@/context/CartContext';
+import { Button, List, Card, Typography, Empty, message, Divider } from 'antd';
+import { DeleteOutlined, ShoppingOutlined, CreditCardOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import { Button, message, Spin, Empty } from 'antd';
-import { cartService } from '@/services/cartService';
-import { bundleService } from '@/services/bundleService';
-import { CartItem } from '@/components/CartItem';
-import Header from '@/components/Header';
+import axios from 'axios';
 
-export default function CartPage() {
+const { Title, Text } = Typography;
+
+const CartPage: React.FC = () => {
+    const { items, removeFromCart, total, clearCart } = useCart();
+    const [processing, setProcessing] = useState(false);
     const router = useRouter();
-    const [cartItems, setCartItems] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [checkingOut, setCheckingOut] = useState(false);
-
-    const fetchCart = async () => {
-        try {
-            const cart = await cartService.getCart();
-            const bundleIds = JSON.parse(cart.bundleIds || '[]');
-
-            if (bundleIds.length > 0) {
-                // Fetch details for each bundle
-                const items = await Promise.all(
-                    bundleIds.map((id: number) => bundleService.getBundle(id))
-                );
-                setCartItems(items);
-            } else {
-                setCartItems([]);
-            }
-        } catch (error) {
-            message.error('Failed to load cart');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCart();
-    }, []);
-
-    const handleRemove = async (id: number) => {
-        try {
-            await cartService.removeFromCart(id);
-            message.success('Item removed');
-            fetchCart(); // Refresh
-        } catch (error) {
-            message.error('Failed to remove item');
-        }
-    };
 
     const handleCheckout = async () => {
-        setCheckingOut(true);
+        if (items.length === 0) return;
+
+        setProcessing(true);
         try {
-            await cartService.checkout();
-            message.success('Purchase successful! Access granted.');
+            const token = localStorage.getItem('token');
+            if (!token) {
+                message.error("Please login to checkout");
+                router.push('/login');
+                return;
+            }
+
+            await axios.post('http://localhost:8080/api/purchase/checkout', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            message.success("Purchase successful! You can now access your bundles.");
+            clearCart();
             router.push('/dashboard');
         } catch (error) {
-            message.error('Checkout failed');
+            console.error("Checkout failed", error);
+            message.error("Checkout failed. Please try again.");
         } finally {
-            setCheckingOut(false);
+            setProcessing(false);
         }
     };
 
-    const total = cartItems.reduce((sum, item) => sum + item.price, 0);
-
-    if (loading) return <div className="flex justify-center p-12"><Spin size="large" /></div>;
-
-    return (
-        <div className="min-h-screen bg-gray-50">
-
-            <div className="max-w-4xl mx-auto p-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-6">Shopping Cart</h1>
-
-                {cartItems.length === 0 ? (
-                    <div className="card text-center py-12">
-                        <Empty description="Your cart is empty" />
-                        <Button type="primary" onClick={() => router.push('/')} className="mt-4 btn-primary">
+    if (items.length === 0) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="bg-white rounded-2xl shadow-sm p-12 text-center">
+                    <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={
+                            <div className="flex flex-col gap-2">
+                                <Text className="text-lg font-medium text-gray-600">Your cart is empty</Text>
+                                <Text className="text-gray-400">Looks like you haven't added any bundles yet.</Text>
+                            </div>
+                        }
+                    >
+                        <Button
+                            type="primary"
+                            size="large"
+                            icon={<ShoppingOutlined />}
+                            onClick={() => router.push('/bundles')}
+                            className="mt-4 bg-primary-600 hover:bg-primary-700 border-none h-12 px-8 text-lg"
+                        >
                             Browse Bundles
                         </Button>
+                    </Empty>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <Title level={2} className="mb-8 font-bold text-gray-800">Shopping Cart</Title>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Cart Items List */}
+                <div className="lg:col-span-2">
+                    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
+                        <List
+                            itemLayout="horizontal"
+                            dataSource={items}
+                            className="p-0"
+                            renderItem={(item) => (
+                                <List.Item
+                                    className="p-6 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0"
+                                    actions={[
+                                        <Button
+                                            key="delete"
+                                            type="text"
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            onClick={() => removeFromCart(item.id)}
+                                            className="hover:bg-red-50 rounded-full h-10 w-10 flex items-center justify-center"
+                                        />
+                                    ]}
+                                >
+                                    <List.Item.Meta
+                                        title={<Text className="text-lg font-semibold text-gray-800">{item.name}</Text>}
+                                        description={
+                                            <div className="mt-1">
+                                                <Text className="text-gray-500 line-clamp-2">{item.description}</Text>
+                                            </div>
+                                        }
+                                    />
+                                    <div className="ml-8 text-right">
+                                        <Text className="text-xl font-bold text-primary-600 block">
+                                            ${item.price.toFixed(2)}
+                                        </Text>
+                                    </div>
+                                </List.Item>
+                            )}
+                        />
                     </div>
-                ) : (
-                    <div className="grid gap-6">
+                </div>
+
+                {/* Order Summary */}
+                <div className="lg:col-span-1">
+                    <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100 sticky top-24">
+                        <Title level={4} className="mb-6 text-gray-800">Order Summary</Title>
+
                         <div className="space-y-4">
-                            {cartItems.map((item) => (
-                                <CartItem key={item.id} item={item} onRemove={handleRemove} />
-                            ))}
+                            <div className="flex justify-between text-gray-600">
+                                <Text>Subtotal ({items.length} items)</Text>
+                                <Text className="font-medium">${total.toFixed(2)}</Text>
+                            </div>
+                            <Divider className="my-4" />
+                            <div className="flex justify-between items-end">
+                                <Text className="text-lg font-semibold text-gray-800">Total</Text>
+                                <Text className="text-3xl font-bold text-primary-600">${total.toFixed(2)}</Text>
+                            </div>
                         </div>
 
-                        <div className="card bg-blue-50 border-blue-100">
-                            <div className="flex justify-between items-center mb-6">
-                                <span className="text-xl font-semibold text-gray-700">Total</span>
-                                <span className="text-3xl font-bold text-blue-600">${total.toFixed(2)}</span>
-                            </div>
-                            <Button
-                                type="primary"
-                                size="large"
-                                block
-                                onClick={handleCheckout}
-                                loading={checkingOut}
-                                className="btn-primary h-12 text-lg"
-                            >
-                                Proceed to Checkout
-                            </Button>
+                        <Button
+                            type="primary"
+                            size="large"
+                            block
+                            onClick={handleCheckout}
+                            loading={processing}
+                            icon={<CreditCardOutlined />}
+                            className="mt-8 h-14 text-lg font-semibold bg-primary-600 hover:bg-primary-700 border-none shadow-lg shadow-primary-600/20 hover:shadow-primary-600/30 transition-all"
+                        >
+                            Checkout Now
+                        </Button>
+
+                        <div className="mt-6 text-center">
+                            <Text type="secondary" className="text-xs">
+                                Secure checkout powered by PayHere (Mock)
+                            </Text>
                         </div>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
-}
+};
+
+export default CartPage;
