@@ -12,6 +12,8 @@ interface PaperCardProps {
     paper: PaperDto;
     /** Number of attempts remaining */
     attemptsRemaining?: number;
+    /** Maximum attempts allowed (including purchased) */
+    maxAttempts?: number;
     /** Whether the paper has been attempted */
     hasAttempted?: boolean;
     /** Whether the attempt button is disabled */
@@ -30,6 +32,7 @@ interface PaperCardProps {
 export const PaperCard: React.FC<PaperCardProps> = ({
     paper,
     attemptsRemaining,
+    maxAttempts,
     hasAttempted = false,
     disabled = false
 }) => {
@@ -70,7 +73,7 @@ export const PaperCard: React.FC<PaperCardProps> = ({
                     <div className="flex items-center justify-between text-sm bg-secondary-50 p-3 rounded-lg mb-4">
                         <span className="text-secondary-600 font-medium">Attempts Left</span>
                         <span className={`font-bold ${attemptsRemaining > 0 ? 'text-primary-600' : 'text-red-600'}`}>
-                            {attemptsRemaining} <span className="text-secondary-400 font-normal">/ {paper.maxFreeAttempts}</span>
+                            {attemptsRemaining} <span className="text-secondary-400 font-normal">/ {maxAttempts ?? paper.maxFreeAttempts}</span>
                         </span>
                     </div>
                 )}
@@ -81,8 +84,8 @@ export const PaperCard: React.FC<PaperCardProps> = ({
                     onClick={handleAttempt}
                     disabled={disabled || (attemptsRemaining !== undefined && attemptsRemaining === 0)}
                     className={`w-full py-2.5 px-4 rounded-lg font-semibold text-sm transition-all duration-200 flex items-center justify-center ${disabled || (attemptsRemaining !== undefined && attemptsRemaining === 0)
-                            ? 'bg-secondary-100 text-secondary-400 cursor-not-allowed'
-                            : 'bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg'
+                        ? 'bg-secondary-100 text-secondary-400 cursor-not-allowed'
+                        : 'bg-primary-600 text-white hover:bg-primary-700 shadow-md hover:shadow-lg'
                         }`}
                 >
                     {disabled ? 'Purchase Required' :

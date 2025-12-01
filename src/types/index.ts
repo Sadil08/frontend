@@ -107,6 +107,11 @@ export interface PaperAttemptDto {
   /** Total marks for the paper (used for weighted scoring) */
   totalMarks?: number;
   questions: QuestionAttemptDto[];
+  // Attempt limit tracking
+  attemptsMade?: number;
+  maxAttempts?: number;
+  remainingAttempts?: number;
+  canAttempt?: boolean;
 }
 
 /**
