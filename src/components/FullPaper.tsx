@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { PaperAttemptDto, AnswerSubmissionDto } from '@/types';
 import { MCQQuestion } from './MCQQuestion';
-import { EssayQuestion } from './EssayQuestion';
+import EssayQuestion from './EssayQuestion';
 import { Modal } from 'antd';
 
 /**
@@ -64,12 +64,17 @@ export const FullPaper: React.FC<FullPaperProps> = ({
     /**
      * Handle answer change for Essay questions
      */
-    const handleEssayAnswer = (questionId: number, answerText: string) => {
+    const handleEssayAnswer = (questionId: number, answerText: string, imageUrl?: string, extractedText?: string) => {
         const newAnswers = new Map(answers);
+        const existing = newAnswers.get(questionId);
+
         newAnswers.set(questionId, {
             questionId,
             selectedOptionId: undefined,
-            answerText
+            answerText,
+            // Preserve existing image/extracted text if not provided (e.g. typing update)
+            imageUrl: imageUrl || existing?.imageUrl,
+            extractedText: extractedText || existing?.extractedText
         });
         setAnswers(newAnswers);
     };

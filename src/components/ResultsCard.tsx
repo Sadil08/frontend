@@ -20,7 +20,7 @@ interface ResultsCardProps {
  * - Color-coded performance indicators
  * - Marks awarded vs available
  * - AI feedback display
- * - Expandable/collapsible design
+ * - Image support for question and student answer
  */
 export const ResultsCard: React.FC<ResultsCardProps> = ({
     answer,
@@ -77,6 +77,14 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({
 
     const style = getPerformanceStyle();
 
+    const getFullImageUrl = (path?: string) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        const separator = path.startsWith('/') ? '' : '/';
+        return `${baseUrl}${separator}${path}`;
+    };
+
     return (
         <div className={`rounded-xl border ${style.borderColor} ${style.bgColor} p-6 mb-6 animate-slide-up shadow-sm`}>
             {/* Header */}
@@ -91,9 +99,26 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({
                             {style.label}
                         </span>
                     </div>
-                    <p className="text-gray-900 font-medium text-lg leading-relaxed">
-                        {answer.questionText}
-                    </p>
+
+                    {/* Question Image if hidden context */}
+                    {answer.questionImageUrl && (
+                        <div className="mb-4">
+                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Original Question Image:</span>
+                            <img
+                                src={getFullImageUrl(answer.questionImageUrl)}
+                                alt="Question Reference"
+                                className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                                style={{ maxHeight: '300px' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                        </div>
+                    )}
+
+                    {!answer.hideQuestionText && (
+                        <p className="text-gray-900 font-medium text-lg leading-relaxed whitespace-pre-wrap">
+                            {answer.questionText}
+                        </p>
+                    )}
                 </div>
 
                 {/* Marks Display */}
@@ -119,10 +144,41 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({
             {/* Your Answer */}
             <div className="mb-6">
                 <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Your Answer</h4>
-                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                    <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-                        {answer.answerText || <span className="text-gray-400 italic">No answer provided</span>}
-                    </p>
+                <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm space-y-4">
+                    {/* Student Image if available */}
+                    {answer.imageUrl && (
+                        <div className="mb-3">
+                            <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-2">Uploaded Handwriting:</span>
+                            <img
+                                src={getFullImageUrl(answer.imageUrl)}
+                                alt="Handwritten Answer"
+                                className="max-w-full h-auto rounded border border-orange-100 shadow-sm"
+                                style={{ maxHeight: '400px' }}
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                        </div>
+                    )}
+
+                    {/* Answer Text */}
+                    {(answer.answerText || answer.extractedText) ? (
+                        <div className="space-y-2">
+                            {answer.answerText && (
+                                <p className="text-gray-800 whitespace-pre-wrap leading-relaxed">
+                                    {answer.answerText}
+                                </p>
+                            )}
+                            {answer.extractedText && !answer.answerText && (
+                                <div>
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight italic block mb-1">Extracted content:</span>
+                                    <p className="text-gray-800 leading-relaxed italic">
+                                        {answer.extractedText}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        !answer.imageUrl && <p className="text-gray-400 italic">No answer provided</p>
+                    )}
                 </div>
             </div>
 

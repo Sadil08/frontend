@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, Button, Form, Input, Select, InputNumber, message, Modal, Tag, List } from 'antd';
+import { Card, Button, Form, Input, Select, InputNumber, message, Modal, Tag, List, Switch } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { AdminPaperDto, QuestionCreateDto, AdminQuestionDto } from '@/types/admin';
 import Header from '@/components/Header';
 import { MarksSummary } from '@/components/admin/MarksSummary';
+import { ImageUploadExtractor } from '@/components/ImageUploadExtractor';
 
 const BooleanButton = ({ value, onChange }: { value?: boolean; onChange?: (val: boolean) => void }) => (
     <Button
@@ -58,7 +59,13 @@ export default function PaperEditPage() {
             type: question.type,
             correctAnswerText: question.correctAnswerText,
             marks: question.marks,
-            options: question.options
+            options: question.options,
+            imageUrl: question.imageUrl,
+            requiresImageDisplay: question.requiresImageDisplay,
+            hideQuestionText: question.hideQuestionText,
+            allowImageAnswer: question.allowImageAnswer,
+            answerTypeHint: question.answerTypeHint,
+            modelAnswerImageUrl: question.modelAnswerImageUrl
         });
         setIsModalOpen(true);
     };
@@ -106,7 +113,13 @@ export default function PaperEditPage() {
                 type: values.type,
                 correctAnswerText: correctAnswerText,
                 marks: values.marks,
-                options: options
+                options: options,
+                imageUrl: values.imageUrl,
+                requiresImageDisplay: values.requiresImageDisplay,
+                hideQuestionText: values.hideQuestionText,
+                allowImageAnswer: values.allowImageAnswer,
+                answerTypeHint: values.answerTypeHint,
+                modelAnswerImageUrl: values.modelAnswerImageUrl
             };
 
             if (editingQuestion) {
@@ -252,6 +265,24 @@ export default function PaperEditPage() {
                         >
                             <Input.TextArea rows={3} />
                         </Form.Item>
+
+                        <Form.Item name="imageUrl" hidden>
+                            <Input />
+                        </Form.Item>
+
+                        <div className="mb-4">
+                            <ImageUploadExtractor
+                                endpoint="/api/questions/extract-from-image"
+                                onExtractionComplete={(text, url) => {
+                                    form.setFieldsValue({
+                                        text: text,
+                                        imageUrl: url
+                                    });
+                                }}
+                                label="Upload Question Image"
+                            />
+                        </div>
+
                         <Form.Item
                             name="type"
                             label="Type"
@@ -259,8 +290,7 @@ export default function PaperEditPage() {
                         >
                             <Select>
                                 <Select.Option value="MCQ">Multiple Choice</Select.Option>
-                                <Select.Option value="ESSAY">Essay</Select.Option>
-                                <Select.Option value="SHORT_ANSWER">Short Answer</Select.Option>
+                                <Select.Option value="ESSAY">Essay / Short Answer</Select.Option>
                             </Select>
                         </Form.Item>
                         <Form.Item
@@ -279,13 +309,86 @@ export default function PaperEditPage() {
                         >
                             {({ getFieldValue }) =>
                                 getFieldValue('type') !== 'MCQ' ? (
-                                    <Form.Item
-                                        name="correctAnswerText"
-                                        label="Correct Answer"
-                                        rules={[{ required: true }]}
-                                    >
-                                        <Input.TextArea rows={2} />
-                                    </Form.Item>
+                                    <>
+                                        <div className="grid grid-cols-3 gap-4 mb-4">
+                                            <Form.Item
+                                                name="requiresImageDisplay"
+                                                valuePropName="checked"
+                                                initialValue={false}
+                                                label="Display Image With Question?"
+                                                tooltip="If checked, the uploaded image will be shown to students alongside the text."
+                                            >
+                                                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                                            </Form.Item>
+
+                                            <Form.Item
+                                                name="hideQuestionText"
+                                                valuePropName="checked"
+                                                initialValue={false}
+                                                label="Hide Question Text?"
+                                                tooltip="If checked, only the image will be shown to students (useful for image-based questions)."
+                                            >
+                                                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                                            </Form.Item>
+
+                                            <Form.Item
+                                                name="allowImageAnswer"
+                                                valuePropName="checked"
+                                                initialValue={true}
+                                                label="Allow Image Answers?"
+                                                tooltip="If checked, students can upload images as answers."
+                                            >
+                                                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                                            </Form.Item>
+                                        </div>
+
+                                        <Form.Item
+                                            name="answerTypeHint"
+                                            label="Answer Type Hint"
+                                            initialValue="essay"
+                                            tooltip="Helps UI suggest the best input method to students"
+                                        >
+                                            <Select>
+                                                <Select.Option value="short">Short Answer (Text recommended)</Select.Option>
+                                                <Select.Option value="essay">Essay (Both allowed)</Select.Option>
+                                                <Select.Option value="diagram">Diagram (Image recommended)</Select.Option>
+                                            </Select>
+                                        </Form.Item>
+
+                                        <div className="border-t pt-4 mt-4">
+                                            <h3 className="font-medium mb-3">Model Answer (Grading Reference)</h3>
+
+                                            <Form.Item name="modelAnswerImageUrl" hidden>
+                                                <Input />
+                                            </Form.Item>
+
+                                            <div className="mb-4">
+                                                <ImageUploadExtractor
+                                                    endpoint="/api/questions/extract-from-image"
+                                                    additionalData={{ paperId: paperId }}
+                                                    onExtractionComplete={(text, url) => {
+                                                        const currentText = form.getFieldValue('correctAnswerText') || '';
+                                                        const newText = currentText ? `${currentText}\n\n[Extracted from Image]: ${text}` : text;
+
+                                                        form.setFieldsValue({
+                                                            correctAnswerText: newText,
+                                                            modelAnswerImageUrl: url
+                                                        });
+                                                    }}
+                                                    label="Upload Model Answer Image"
+                                                />
+                                            </div>
+
+                                            <Form.Item
+                                                name="correctAnswerText"
+                                                label="Model Answer Text / Explanation"
+                                                rules={[{ required: true }]}
+                                                tooltip="Used by AI for grading. Be descriptive."
+                                            >
+                                                <Input.TextArea rows={4} />
+                                            </Form.Item>
+                                        </div>
+                                    </>
                                 ) : (
                                     <Form.List name="options">
                                         {(fields, { add, remove }) => (

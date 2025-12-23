@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { AttemptAnswer } from '@/types';
 import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
@@ -18,7 +18,6 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
     // Determine correctness level
     const isCorrect = answer.marksAwarded === answer.marksAvailable;
     const isPartiallyCorrect = answer.marksAwarded !== null && answer.marksAwarded > 0 && answer.marksAwarded < answer.marksAvailable;
-    const isIncorrect = answer.marksAwarded === 0;
 
     // Get border and background colors based on correctness
     const getCardStyle = () => {
@@ -48,6 +47,26 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
         return 'text-red-700';
     };
 
+    // Diagnostic effects
+    useEffect(() => {
+        console.log(`Question ${questionNumber} Answer Data:`, {
+            id: answer.id,
+            questionId: answer.questionId,
+            answerText: !!answer.answerText,
+            imageUrl: answer.imageUrl,
+            extractedText: !!answer.extractedText,
+            questionImageUrl: answer.questionImageUrl
+        });
+    }, [answer, questionNumber]);
+
+    const getFullImageUrl = (path?: string) => {
+        if (!path) return '';
+        if (path.startsWith('http')) return path;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        const separator = path.startsWith('/') ? '' : '/';
+        return `${baseUrl}${separator}${path}`;
+    };
+
     return (
         <div className={`card-base border-l-4 ${getCardStyle()} p-4 sm:p-6 mb-6 animate-slide-up hover:shadow-lg transition-all duration-300`}>
             {/* Question Header */}
@@ -69,8 +88,8 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                 {/* Marks Badge */}
                 <div className="flex items-center gap-2 bg-white px-3 sm:px-4 py-2 rounded-lg shadow-sm border border-gray-200 self-start sm:self-auto">
                     <span className={`text-2xl sm:text-3xl font-bold ${isCorrect ? 'text-green-600' :
-                            isPartiallyCorrect ? 'text-yellow-600' :
-                                'text-red-600'
+                        isPartiallyCorrect ? 'text-yellow-600' :
+                            'text-red-600'
                         }`}>
                         {answer.marksAwarded ?? 0}
                     </span>
@@ -82,15 +101,37 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                 </div>
             </div>
 
-            {/* Question Text */}
+            {/* Question Text & Image */}
             <div className="mb-6">
                 <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">
-                    Question
+                    Question Reference
                 </h4>
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                    <p className="text-gray-900 text-lg leading-relaxed">
-                        {answer.questionText}
-                    </p>
+                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    {answer.questionImageUrl && (
+                        <div className="mb-4">
+                            <span className="text-xs font-semibold text-gray-500 block mb-2 font-bold uppercase tracking-tight">Question Image:</span>
+                            <img
+                                src={getFullImageUrl(answer.questionImageUrl)}
+                                alt="Question Reference"
+                                className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                                style={{ maxHeight: '400px' }}
+                                onError={(e) => {
+                                    console.error('Failed to load question image:', answer.questionImageUrl);
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    )}
+                    {!answer.hideQuestionText && (
+                        <p className="text-gray-900 text-lg leading-relaxed whitespace-pre-wrap">
+                            {answer.questionText || <span className="text-gray-400 italic text-sm">No question text available</span>}
+                        </p>
+                    )}
+                    {!answer.questionImageUrl && answer.hideQuestionText && (
+                        <p className="text-amber-600 text-sm italic mt-2">
+                            (Question text is hidden and no reference image is available)
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -104,14 +145,62 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                         </svg>
                         Your Answer
                     </h4>
-                    <div className="bg-orange-50 border-l-4 border-orange-400 p-3 sm:p-4 rounded-lg min-h-[80px] hover:bg-orange-100 transition-colors duration-200">
-                        <p className="text-gray-900 leading-relaxed text-sm sm:text-base">
-                            {answer.answerText || (
-                                answer.selectedOptionId ?
-                                    `Selected Option ID: ${answer.selectedOptionId}` :
-                                    <span className="text-gray-400 italic">No answer provided</span>
-                            )}
-                        </p>
+                    <div className="bg-orange-50 border-l-4 border-orange-400 p-3 sm:p-4 rounded-lg min-h-[100px] hover:bg-orange-100 transition-colors duration-200 space-y-4">
+                        {/* Display Handwritten Image if available */}
+                        {answer.imageUrl && (
+                            <div className="mb-2">
+                                <span className="text-xs font-semibold text-orange-700 block mb-1 font-bold">Uploaded Handwriting:</span>
+                                <img
+                                    src={getFullImageUrl(answer.imageUrl)}
+                                    alt="Handwritten Answer"
+                                    className="max-w-full h-auto rounded border border-orange-200 shadow-sm hover:shadow-md transition-all"
+                                    style={{ maxHeight: '400px' }}
+                                    onError={(e) => {
+                                        console.error('Failed to load student answer image:', answer.imageUrl);
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
+
+                        {/* Display Typed Text or Extracted Text */}
+                        {(answer.answerText || answer.extractedText) ? (
+                            <div className="space-y-2">
+                                {answer.answerText && (
+                                    <div>
+                                        {answer.imageUrl && <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-1">Typed Answer:</span>}
+                                        <p className="text-gray-900 leading-relaxed text-sm sm:text-base whitespace-pre-wrap font-medium">
+                                            {answer.answerText}
+                                        </p>
+                                    </div>
+                                )}
+                                {answer.extractedText && !answer.answerText && (
+                                    <div>
+                                        <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-1 italic">Extracted from Handwriting:</span>
+                                        <p className="text-gray-800 leading-relaxed text-sm sm:text-base font-medium">
+                                            {answer.extractedText}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        ) : null}
+
+                        {/* Fallback for no answer */}
+                        {(!answer.answerText && !answer.imageUrl && !answer.extractedText && !answer.selectedOptionId) && (
+                            <div className="flex items-center gap-2 text-gray-400 italic py-2">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <span className="text-sm">No answer provided or detected.</span>
+                            </div>
+                        )}
+
+                        {/* MCQ Selection */}
+                        {answer.selectedOptionId && (
+                            <p className="text-gray-900 font-medium bg-white/50 p-2 rounded border border-orange-100 italic">
+                                Selected Option: <span className="text-orange-700 font-bold underline decoration-orange-300">{answer.selectedOptionText || `ID ${answer.selectedOptionId}`}</span>
+                            </p>
+                        )}
                     </div>
                 </div>
 
@@ -123,12 +212,12 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                         </svg>
                         Correct Answer
                     </h4>
-                    <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded-lg min-h-[80px] hover:bg-green-100 transition-colors duration-200">
+                    <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded-lg min-h-[100px] hover:bg-green-100 transition-colors duration-200">
                         <p className="text-gray-900 leading-relaxed font-medium text-sm sm:text-base">
                             {answer.correctAnswerText || answer.correctOptionText || (
                                 answer.correctOptionId ?
                                     `Correct Option ID: ${answer.correctOptionId}` :
-                                    <span className="text-gray-400 italic">Not available</span>
+                                    <span className="text-gray-400 italic font-normal">Answer details not available</span>
                             )}
                         </p>
                     </div>
@@ -144,17 +233,17 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                         </svg>
                         AI Feedback & Explanation
                     </h4>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
-                        <div className="flex gap-3">
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 shadow-sm">
+                        <div className="flex gap-4">
                             <div className="flex-shrink-0">
-                                <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
-                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg transform rotate-3">
+                                    <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                 </div>
                             </div>
                             <div className="flex-1">
-                                <p className="text-gray-800 leading-relaxed text-base">
+                                <p className="text-gray-800 leading-relaxed text-base font-medium">
                                     {answer.aiFeedback}
                                 </p>
                             </div>
@@ -162,7 +251,6 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                     </div>
                 </div>
             )}
-
         </div>
     );
 };
