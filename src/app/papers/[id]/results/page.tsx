@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -13,11 +13,7 @@ import { AttemptDetails } from '@/types';
 import { LeaderboardEntry } from '@/types/leaderboardTypes';
 import { message, Modal } from 'antd';
 
-/**
- * Paper Results Page
- * Displays paper attempt results with AI feedback and leaderboard
- */
-export default function PaperResultsPage() {
+function ResultsContent() {
     const params = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -313,5 +309,17 @@ export default function PaperResultsPage() {
                 </div>
             </div>
         </ProtectedRoute>
+    );
+}
+
+export default function PaperResultsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <LoadingSkeleton variant="card" height="300px" width="500px" />
+            </div>
+        }>
+            <ResultsContent />
+        </Suspense>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ import { useBundles } from '@/hooks/useBundles';
 import { useAuth } from '@/context/AuthContext';
 import { BundleFilterParams } from '@/services/bundleService';
 
-export default function Home() {
+function BundlesContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -90,10 +90,7 @@ export default function Home() {
   };
 
   const handleFilterChange = (newFilters: BundleFilterParams) => {
-    console.log('handleFilterChange called with:', newFilters);
-    console.log('Previous filterState:', filterState);
     setFilterState(newFilters);
-    console.log('setFilterState called');
   };
 
   const handleClearFilters = () => {
@@ -200,5 +197,17 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+    }>
+      <BundlesContent />
+    </Suspense>
   );
 }
