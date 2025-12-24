@@ -87,8 +87,14 @@ export interface AdminQuestionDto {
     id: number;
     paperId: number;
     text: string;
-    type: 'MCQ' | 'ESSAY' | 'SHORT_ANSWER';
+    type: 'MCQ' | 'ESSAY';
     correctAnswerText: string;
+    imageUrl?: string;
+    modelAnswerImageUrl?: string;
+    requiresImageDisplay?: boolean;
+    hideQuestionText?: boolean;
+    allowImageAnswer?: boolean;
+    answerTypeHint?: 'short' | 'essay' | 'diagram';
     marks: number;
     options: AdminQuestionOptionDto[];
 }
@@ -114,8 +120,15 @@ export interface PaperCreateDto {
 /** Question create/update request DTO */
 export interface QuestionCreateDto {
     text: string;
-    type: 'MCQ' | 'ESSAY' | 'SHORT_ANSWER';
+    type: 'MCQ' | 'ESSAY';
     correctAnswerText: string;
+    imageUrl?: string;
+    modelAnswerImageUrl?: string;
+    extractedText?: string;
+    requiresImageDisplay?: boolean;
+    hideQuestionText?: boolean;
+    allowImageAnswer?: boolean;
+    answerTypeHint?: 'short' | 'essay' | 'diagram';
     marks: number;
     options: AdminQuestionOptionDto[];
 }

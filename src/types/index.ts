@@ -92,6 +92,11 @@ export interface QuestionAttemptDto {
   paperId: number;
   text: string;
   type: 'MCQ' | 'ESSAY';
+  imageUrl?: string;
+  requiresImageDisplay?: boolean;
+  hideQuestionText?: boolean;
+  allowImageAnswer?: boolean;
+  answerTypeHint?: 'short' | 'essay' | 'diagram';
   marks: number;
   options: OptionAttemptDto[];
 }
@@ -123,6 +128,8 @@ export interface AnswerSubmissionDto {
   questionId: number;
   selectedOptionId?: number;
   answerText?: string;
+  imageUrl?: string;
+  extractedText?: string;
 }
 
 /** Complete paper submission payload */
@@ -147,6 +154,10 @@ export interface StudentAnswerDto {
   marksAwarded: number | null;
   marksAvailable: number;
   aiFeedback: string | null;
+  imageUrl?: string;
+  extractedText?: string;
+  questionImageUrl?: string;
+  hideQuestionText?: boolean;
   // Correct answer fields (only available after submission)
   correctAnswerText?: string | null;
   correctOptionId?: number | null;
@@ -181,7 +192,13 @@ export interface QuestionDto {
   text: string;
   type: 'MCQ' | 'ESSAY';
   correctAnswerText?: string;
+  imageUrl?: string;
+  extractedText?: string;
+  requiresImageDisplay?: boolean;
+  allowImageAnswer?: boolean;
+  answerTypeHint?: 'short' | 'essay' | 'diagram';
   paperId: number;
+  hideQuestionText?: boolean;
 }
 
 /** Question option with correct flag (admin use) */

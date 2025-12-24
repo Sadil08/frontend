@@ -29,14 +29,19 @@ export interface AttemptAnswer {
     attemptId: number;
     questionId: number;
     questionText: string;
+    questionImageUrl?: string;
+    hideQuestionText?: boolean;
     answerText?: string;
     selectedOptionId?: number;
+    selectedOptionText?: string;
     marksAwarded: number;
     marksAvailable: number;
     aiFeedback: string;
     correctAnswerText?: string;
     correctOptionId?: number;
     correctOptionText?: string;
+    imageUrl?: string;
+    extractedText?: string;
 }
 
 /**
