@@ -26,8 +26,8 @@ function BundlesContent() {
       params.type = type;
     }
 
-    const examType = searchParams.get('examType');
-    if (examType) params.examType = examType;
+    const examTypeId = searchParams.get('examTypeId');
+    if (examTypeId) params.examTypeId = parseInt(examTypeId);
 
     const subjectId = searchParams.get('subjectId');
     if (subjectId) params.subjectId = parseInt(subjectId);

@@ -5,7 +5,7 @@ import { Button, Modal, Form, Input, Select, InputNumber, Checkbox, message, Tag
 import { PlusOutlined, EyeOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { AdminBundleDto, BundleCreateDto } from '@/types/admin';
-import { SubjectDto, LessonDto } from '@/types';
+import { SubjectDto, LessonDto, ExamType } from '@/types';
 import { ListTable } from '@/components/ListTable';
 
 import { useRouter } from 'next/navigation';
@@ -15,6 +15,7 @@ export default function BundleManagementPage() {
     const [bundles, setBundles] = useState<AdminBundleDto[]>([]);
     const [subjects, setSubjects] = useState<SubjectDto[]>([]);
     const [lessons, setLessons] = useState<LessonDto[]>([]);
+    const [examTypes, setExamTypes] = useState<ExamType[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -23,14 +24,16 @@ export default function BundleManagementPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [bundlesData, subjectsData, lessonsData] = await Promise.all([
+            const [bundlesData, subjectsData, lessonsData, examTypesData] = await Promise.all([
                 adminService.getBundles(),
                 adminService.getSubjects(),
-                adminService.getLessons()
+                adminService.getLessons(),
+                adminService.getExamTypes()
             ]);
             setBundles(bundlesData);
             setSubjects(subjectsData);
             setLessons(lessonsData);
+            setExamTypes(examTypesData);
         } catch (error) {
             console.error('Failed to load data:', error);
             message.error('Failed to load data');
@@ -56,7 +59,7 @@ export default function BundleManagementPage() {
             description: record.description,
             price: record.price,
             type: record.type,
-            examType: record.examType,
+            examTypeId: record.examTypeId,
             subjectId: record.subjectId,
             lessonId: record.lessonId,
             isPastPaper: record.isPastPaper
@@ -94,7 +97,7 @@ export default function BundleManagementPage() {
                 description: values.description,
                 price: values.price,
                 type: values.type,
-                examType: values.examType,
+                examTypeId: values.examTypeId,
                 isPastPaper: values.isPastPaper || false,
                 subjectId: values.subjectId,
                 lessonId: values.lessonId
@@ -149,8 +152,8 @@ export default function BundleManagementPage() {
         },
         {
             title: 'Exam Type',
-            dataIndex: 'examType',
-            key: 'examType',
+            dataIndex: 'examTypeName',
+            key: 'examTypeName',
             width: 120,
             render: (text: string) => <Tag className="rounded-md">{text}</Tag>
         },
@@ -297,11 +300,17 @@ export default function BundleManagementPage() {
                                 </Select>
                             </Form.Item>
                             <Form.Item
-                                name="examType"
+                                name="examTypeId"
                                 label="Exam Type"
                                 rules={[{ required: true, message: 'Exam type is required' }]}
                             >
-                                <Input placeholder="e.g., MIDTERM, FINAL" className="rounded-lg" />
+                                <Select placeholder="Select exam type" className="rounded-lg">
+                                    {examTypes.map(et => (
+                                        <Select.Option key={et.id} value={et.id}>
+                                            {et.name}
+                                        </Select.Option>
+                                    ))}
+                                </Select>
                             </Form.Item>
                             <Form.Item name="subjectId" label="Subject">
                                 <Select allowClear placeholder="Select subject" className="rounded-lg">

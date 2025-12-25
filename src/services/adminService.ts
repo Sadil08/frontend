@@ -312,5 +312,40 @@ export const adminService = {
      */
     deleteLesson: async (id: number): Promise<void> => {
         await apiClient.delete(`/api/lessons/${id}`);
+    },
+
+    // ============================================================================
+    // Exam Type Management
+    // ============================================================================
+
+    /**
+     * Get all exam types
+     */
+    getExamTypes: async (): Promise<any[]> => {
+        const response = await apiClient.get<any[]>('/api/exam-types');
+        return response.data;
+    },
+
+    /**
+     * Create exam type
+     */
+    createExamType: async (data: any): Promise<any> => {
+        const response = await apiClient.post<any>('/api/exam-types', data);
+        return response.data;
+    },
+
+    /**
+     * Update exam type
+     */
+    updateExamType: async (id: number, data: any): Promise<any> => {
+        const response = await apiClient.put<any>(`/api/exam-types/${id}`, data);
+        return response.data;
+    },
+
+    /**
+     * Delete exam type
+     */
+    deleteExamType: async (id: number): Promise<void> => {
+        await apiClient.delete(`/api/exam-types/${id}`);
     }
 };

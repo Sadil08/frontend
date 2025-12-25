@@ -22,6 +22,13 @@ export interface UserResponse {
   role: 'STUDENT' | 'ADMIN';
 }
 
+/** Exam Type entity */
+export interface ExamType {
+  id: number;
+  name: string;
+  description: string;
+}
+
 /**
  * Bundle and Paper types
  */
@@ -59,7 +66,8 @@ export interface PaperBundleDetailDto {
   description: string;
   price: number;
   type: 'MCQ' | 'ESSAY' | 'MIXED';
-  examType: string;
+  examTypeId: number;
+  examTypeName: string;
   isPastPaper: boolean;
   papers: PaperDto[];
 }
@@ -274,7 +282,8 @@ export interface StudentBundleAccess {
   bundleDescription: string;
   price: number;
   type: string;
-  examType: string;
+  examTypeId: number;
+  examTypeName: string;
   isPastPaper: boolean;
   subjectName?: string;
   lessonName?: string;

@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Select, Slider, Checkbox, Button, Badge, Drawer } from 'antd';
 import { FilterOutlined, CloseOutlined } from '@ant-design/icons';
-import { BundleFilterParams, getSubjects, getLessons } from '@/services/bundleService';
-import { SubjectDto, LessonDto } from '@/types';
+import { BundleFilterParams, getSubjects, getLessons, getExamTypes } from '@/services/bundleService';
+import { SubjectDto, LessonDto, ExamType } from '@/types';
 
 interface BundleFiltersProps {
     filters: BundleFilterParams;
     onFilterChange: (filters: BundleFilterParams) => void;
     onClearFilters: () => void;
-    isMobile?: boolean;
+    isMobile?: boolean; // Add isMobile to interface
 }
 
 /**
@@ -33,17 +33,20 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [subjects, setSubjects] = useState<SubjectDto[]>([]);
     const [allLessons, setAllLessons] = useState<LessonDto[]>([]);
+    const [examTypes, setExamTypes] = useState<ExamType[]>([]);
     const [filteredLessons, setFilteredLessons] = useState<LessonDto[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [subjectsData, lessonsData] = await Promise.all([
+                const [subjectsData, lessonsData, examTypesData] = await Promise.all([
                     getSubjects(),
-                    getLessons()
+                    getLessons(),
+                    getExamTypes()
                 ]);
                 setSubjects(subjectsData);
                 setAllLessons(lessonsData);
+                setExamTypes(examTypesData);
             } catch (error) {
                 console.error('Failed to fetch filter data:', error);
             }
@@ -52,19 +55,8 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
     }, []);
 
     useEffect(() => {
-        console.log('Filter effect triggered:', {
-            subjectId: filters.subjectId,
-            subjectIdType: typeof filters.subjectId,
-            allLessonsCount: allLessons.length,
-            sampleLesson: allLessons[0]
-        });
-
         if (filters.subjectId) {
-            const filtered = allLessons.filter(l => {
-                console.log('Comparing:', l.subjectId, '===', filters.subjectId, ':', l.subjectId === filters.subjectId);
-                return l.subjectId === filters.subjectId;
-            });
-            console.log('Filtered lessons:', filtered);
+            const filtered = allLessons.filter(l => l.subjectId === filters.subjectId);
             setFilteredLessons(filtered);
         } else {
             setFilteredLessons([]);
@@ -107,18 +99,15 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                 </label>
                 <Select
                     placeholder="All Exams"
-                    value={filters.examType}
-                    onChange={(value) => handleFilterChange('examType', value)}
+                    value={filters.examTypeId}
+                    onChange={(value) => handleFilterChange('examTypeId', value)}
                     className="w-full"
                     size="large"
                     allowClear
                 >
-                    <Select.Option value="SAT">SAT</Select.Option>
-                    <Select.Option value="ACT">ACT</Select.Option>
-                    <Select.Option value="GCSE">GCSE</Select.Option>
-                    <Select.Option value="AP">AP</Select.Option>
-                    <Select.Option value="IB">IB</Select.Option>
-                    <Select.Option value="A-Level">A-Level</Select.Option>
+                    {examTypes.map(exam => (
+                        <Select.Option key={exam.id} value={exam.id}>{exam.name}</Select.Option>
+                    ))}
                 </Select>
             </div>
 

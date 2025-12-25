@@ -6,7 +6,7 @@ import { PaperBundleDetailDto, PaperBundleSummaryDto, StudentBundleAccess, Subje
  */
 export interface BundleFilterParams {
   type?: 'MCQ' | 'ESSAY' | 'MIXED';
-  examType?: string;
+  examTypeId?: number;
   subjectId?: number;
   lessonId?: number;
   isPastPaper?: boolean;
@@ -96,6 +96,15 @@ export const bundleService = {
   getLessons: async (): Promise<LessonDto[]> => {
     const response = await apiClient.get<LessonDto[]>('/api/lessons');
     return response.data;
+  },
+
+  /**
+   * Get all exam types
+   * @returns Array of exam types
+   */
+  getExamTypes: async (): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/api/exam-types');
+    return response.data;
   }
 };
 
@@ -108,3 +117,4 @@ export const getMyBundles = bundleService.getMyBundles;
 export const purchaseBundle = bundleService.purchaseBundle;
 export const getSubjects = bundleService.getSubjects;
 export const getLessons = bundleService.getLessons;
+export const getExamTypes = bundleService.getExamTypes;

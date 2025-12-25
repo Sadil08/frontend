@@ -200,6 +200,9 @@ export default function AdminDashboard() {
                                 <Link href="/admin/lessons" className="px-4 py-2 bg-gray-100 text-secondary-700 rounded-lg text-center font-medium hover:bg-gray-200 transition-colors">
                                     Lessons
                                 </Link>
+                                <Link href="/admin/exam-types" className="col-span-2 px-4 py-2 bg-gray-100 text-secondary-700 rounded-lg text-center font-medium hover:bg-gray-200 transition-colors">
+                                    Exam Types
+                                </Link>
                             </div>
                         </div>
                     </div>

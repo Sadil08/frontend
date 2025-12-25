@@ -38,7 +38,8 @@ export interface AdminBundleDto {
     description: string;
     price: number;
     type: 'MCQ' | 'ESSAY' | 'MIXED';
-    examType: string;
+    examTypeId: number;
+    examTypeName: string;
     subjectId: number | null;
     lessonId: number | null;
     isPastPaper: boolean;
@@ -54,7 +55,7 @@ export interface BundleCreateDto {
     description: string;
     price: number;
     type: 'MCQ' | 'ESSAY' | 'MIXED';
-    examType: string;
+    examTypeId: number;
     isPastPaper: boolean;
     subjectId?: number;
     lessonId?: number;
