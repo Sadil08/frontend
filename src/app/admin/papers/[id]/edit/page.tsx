@@ -6,7 +6,7 @@ import { Card, Button, Form, Input, Select, InputNumber, message, Modal, Tag, Li
 import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { AdminPaperDto, QuestionCreateDto, AdminQuestionDto } from '@/types/admin';
-import Header from '@/components/Header';
+
 import { MarksSummary } from '@/components/admin/MarksSummary';
 import { ImageUploadExtractor } from '@/components/ImageUploadExtractor';
 
@@ -143,7 +143,7 @@ export default function PaperEditPage() {
     if (loading || !paper) {
         return (
             <div className="min-h-screen bg-gray-50">
-                <Header />
+
                 <div className="max-w-7xl mx-auto p-6">Loading...</div>
             </div>
         );
@@ -151,7 +151,7 @@ export default function PaperEditPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header />
+
             <div className="max-w-7xl mx-auto p-6">
                 <Button
                     icon={<ArrowLeftOutlined />}
