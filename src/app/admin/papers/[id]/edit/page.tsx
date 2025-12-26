@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Card, Button, Form, Input, Select, InputNumber, message, Modal, Tag, List, Switch } from 'antd';
-import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card, Button, Form, Input, Select, InputNumber, message, Modal, Tag, List, Switch, FloatButton, Badge as AntBadge, Alert, Space } from 'antd';
+import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, DatabaseOutlined, LoadingOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
+import { extractBatch } from '@/services/batchExtractionService';
 import { AdminPaperDto, QuestionCreateDto, AdminQuestionDto } from '@/types/admin';
 
 import { MarksSummary } from '@/components/admin/MarksSummary';
@@ -29,6 +30,18 @@ export default function PaperEditPage() {
     const [editingQuestion, setEditingQuestion] = useState<AdminQuestionDto | null>(null);
     const [form] = Form.useForm();
 
+    // Batch processing state
+    const [batchQueue, setBatchQueue] = useState<Map<string, { file: File, questionId: number, field: 'question' | 'modelAnswer' }>>(new Map());
+    const [isProcessingBatch, setIsProcessingBatch] = useState(false);
+    const [tempQueuedFiles, setTempQueuedFiles] = useState<Map<'question' | 'modelAnswer', File>>(new Map());
+
+    // NEW: Local queue for questions not yet saved to database
+    const [pendingQuestions, setPendingQuestions] = useState<Array<{
+        formValues: any,
+        files: Map<'question' | 'modelAnswer', File>,
+        tempId: string
+    }>>([]);
+
     const fetchPaper = async () => {
         setLoading(true);
         try {
@@ -48,12 +61,14 @@ export default function PaperEditPage() {
 
     const handleAddQuestion = () => {
         setEditingQuestion(null);
+        setTempQueuedFiles(new Map());
         form.resetFields();
         setIsModalOpen(true);
     };
 
     const handleEditQuestion = (question: AdminQuestionDto) => {
         setEditingQuestion(question);
+        setTempQueuedFiles(new Map());
         form.setFieldsValue({
             text: question.text,
             type: question.type,
@@ -122,21 +137,183 @@ export default function PaperEditPage() {
                 modelAnswerImageUrl: values.modelAnswerImageUrl
             };
 
+            let savedQuestionId;
             if (editingQuestion) {
                 await adminService.updateQuestion(paperId, editingQuestion.id, questionData);
+                savedQuestionId = editingQuestion.id;
                 message.success('Question updated');
             } else {
-                await adminService.addQuestion(paperId, questionData);
+                const response = await adminService.addQuestion(paperId, questionData);
+                savedQuestionId = response.id;
                 message.success('Question added');
             }
+
+            // If there's files queued in the modal, add them to the parent batch queue for existing questions
+            if (tempQueuedFiles.size > 0 && savedQuestionId) {
+                const newQueue = new Map(batchQueue);
+                tempQueuedFiles.forEach((file, field) => {
+                    const key = `${savedQuestionId}_${field}`;
+                    newQueue.set(key, {
+                        file,
+                        questionId: savedQuestionId,
+                        field
+                    });
+                });
+                setBatchQueue(newQueue);
+            }
+
+            setTempQueuedFiles(new Map());
+
             setIsModalOpen(false);
             form.resetFields();
             fetchPaper();
         } catch (error: any) {
             console.error('Failed to save question:', error);
-            // Try to show more specific error from backend if available
             const errorMsg = error.response?.data?.message || 'Failed to save question';
             message.error(errorMsg);
+        }
+    };
+
+    /**
+     * QUEUE FOR BATCH (Does not save to database yet)
+     */
+    const handleQueueForBatch = async () => {
+        try {
+            const values = await form.validateFields();
+
+            if (tempQueuedFiles.size === 0) {
+                message.warning("No images queued for batch processing.");
+                return;
+            }
+
+            setPendingQuestions([...pendingQuestions, {
+                formValues: values,
+                files: new Map(tempQueuedFiles),
+                tempId: `pending-${Date.now()}`
+            }]);
+
+            message.success("Question queued locally for batch processing.");
+            setIsModalOpen(false);
+            form.resetFields();
+            setTempQueuedFiles(new Map());
+        } catch (error) {
+            // Validation failed
+            message.error("Please fill required fields before queuing.");
+        }
+    };
+
+    /**
+     * Process all items in the batch queue
+     */
+    const handleProcessBatch = async () => {
+        if ((batchQueue.size === 0 && pendingQuestions.length === 0) || !paper) return;
+
+        setIsProcessingBatch(true);
+        const totalItems = batchQueue.size + pendingQuestions.reduce((acc, pq) => acc + pq.files.size, 0);
+        const hideLoading = message.loading(`Processing batch of ${totalItems} extractions...`, 0);
+
+        try {
+            const batchItems: any[] = [];
+
+            // 1. Add existing question items
+            batchQueue.forEach((q, key) => {
+                batchItems.push({
+                    id: `existing_${key}`,
+                    file: q.file
+                });
+            });
+
+            // 2. Add pending question items
+            pendingQuestions.forEach((pq, idx) => {
+                pq.files.forEach((file, field) => {
+                    batchItems.push({
+                        id: `pending_${idx}_${field}`,
+                        file: file
+                    });
+                });
+            });
+
+            // Use the batch service
+            const response = await extractBatch(batchItems);
+
+            // 3. Update existing questions
+            const existingResults = response.results.filter(r => r.id.startsWith('existing_'));
+            for (const result of existingResults) {
+                const key = result.id.replace('existing_', '');
+                const [qId, field] = key.split('_');
+                const questionId = Number(qId);
+
+                const q = paper.questions.find(q => q.id === questionId);
+                if (q) {
+                    const updateData: QuestionCreateDto = {
+                        ...q,
+                        text: field === 'question' ? result.extractedText : q.text,
+                        imageUrl: field === 'question' ? result.imageUrl : q.imageUrl,
+                        modelAnswerImageUrl: field === 'modelAnswer' ? result.imageUrl : q.modelAnswerImageUrl,
+                        correctAnswerText: field === 'modelAnswer' ? result.extractedText : q.correctAnswerText
+                    };
+                    await adminService.updateQuestion(paperId, questionId, updateData);
+                }
+            }
+
+            // 4. Create pending questions
+            const pendingResultsByIdx = new Map<number, Map<string, any>>();
+            response.results.filter(r => r.id.startsWith('pending_')).forEach(r => {
+                const parts = r.id.split('_');
+                const idx = Number(parts[1]);
+                const field = parts[2];
+
+                if (!pendingResultsByIdx.has(idx)) pendingResultsByIdx.set(idx, new Map());
+                pendingResultsByIdx.get(idx)!.set(field, r);
+            });
+
+            for (const [idx, results] of pendingResultsByIdx.entries()) {
+                const pq = pendingQuestions[idx];
+                const qResult = results.get('question');
+                const mResult = results.get('modelAnswer');
+
+                // Sanitize options to only include necessary fields
+                let options = pq.formValues.type === 'MCQ' ? (pq.formValues.options || []).map((opt: any) => ({
+                    id: opt.id,
+                    text: opt.text,
+                    isCorrect: !!opt.isCorrect // Ensure boolean
+                })) : [];
+
+                let correctAnswerText = pq.formValues.correctAnswerText;
+                if (mResult) {
+                    correctAnswerText = mResult.extractedText;
+                }
+
+                // If MCQ, derive correct answer from options
+                if (pq.formValues.type === 'MCQ') {
+                    const correctOption = options.find((opt: any) => opt.isCorrect);
+                    if (correctOption) {
+                        correctAnswerText = correctOption.text;
+                    }
+                }
+
+                const questionData: QuestionCreateDto = {
+                    ...pq.formValues,
+                    text: qResult ? qResult.extractedText : pq.formValues.text,
+                    imageUrl: qResult ? qResult.imageUrl : pq.formValues.imageUrl,
+                    correctAnswerText: correctAnswerText,
+                    modelAnswerImageUrl: mResult ? mResult.imageUrl : pq.formValues.modelAnswerImageUrl,
+                    options: options
+                };
+
+                await adminService.addQuestion(paperId, questionData);
+            }
+
+            message.success(`Batch processing complete! All questions saved and updated.`);
+            setBatchQueue(new Map());
+            setPendingQuestions([]);
+            fetchPaper();
+        } catch (error: any) {
+            console.error('Batch extraction failed:', error);
+            message.error(error.message || 'Batch extraction failed');
+        } finally {
+            setIsProcessingBatch(false);
+            hideLoading();
         }
     };
 
@@ -175,29 +352,69 @@ export default function PaperEditPage() {
                 {/* Marks Allocation Summary */}
                 <MarksSummary paper={paper} />
 
+                {batchQueue.size > 0 && (
+                    <Alert
+                        message={`You have ${batchQueue.size} items queued for AI extraction.`}
+                        type="info"
+                        showIcon
+                        action={
+                            <Button size="small" type="primary" onClick={handleProcessBatch} loading={isProcessingBatch}>
+                                Process All Queued Items
+                            </Button>
+                        }
+                        className="mb-4"
+                    />
+                )}
+
                 <Card
                     title="Questions"
                     extra={
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={handleAddQuestion}
-                        >
-                            Add Question
-                        </Button>
+                        <Space>
+                            {(batchQueue.size > 0 || pendingQuestions.length > 0) && (
+                                <Button
+                                    icon={<DatabaseOutlined />}
+                                    onClick={handleProcessBatch}
+                                    loading={isProcessingBatch}
+                                    danger
+                                >
+                                    Process Batch ({batchQueue.size + pendingQuestions.length})
+                                </Button>
+                            )}
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={handleAddQuestion}
+                            >
+                                Add Question
+                            </Button>
+                        </Space>
                     }
                 >
                     <List
-                        dataSource={paper.questions}
-                        renderItem={(question, index) => (
+                        dataSource={[
+                            ...paper.questions,
+                            ...pendingQuestions.map((pq, idx) => ({
+                                id: -1 - idx, // Negative ID for pending
+                                text: pq.formValues.text || `[Pending AI Extraction ${idx + 1}]`,
+                                type: pq.formValues.type,
+                                marks: pq.formValues.marks,
+                                isPending: true,
+                                options: pq.formValues.options || [],
+                                correctAnswerText: pq.formValues.correctAnswerText
+                            }))
+                        ]}
+                        renderItem={(question: any, index) => (
                             <List.Item
                                 key={question.id}
-                                actions={[
+                                className={question.isPending ? 'bg-orange-50 border-orange-200' : ''}
+                                actions={question.isPending ? [
+                                    <Tag color="orange" icon={<LoadingOutlined />}>Queued for Batch</Tag>
+                                ] : [
                                     <Button
                                         key="edit"
                                         type="link"
                                         icon={<EditOutlined />}
-                                        onClick={() => handleEditQuestion(question)}
+                                        onClick={() => handleEditQuestion(question as AdminQuestionDto)}
                                     >
                                         Edit
                                     </Button>,
@@ -206,7 +423,7 @@ export default function PaperEditPage() {
                                         type="link"
                                         danger
                                         icon={<DeleteOutlined />}
-                                        onClick={() => handleDeleteQuestion(question)}
+                                        onClick={() => handleDeleteQuestion(question as AdminQuestionDto)}
                                     >
                                         Delete
                                     </Button>
@@ -224,9 +441,9 @@ export default function PaperEditPage() {
                                         </div>
                                     }
                                     description={
-                                        question.type === 'MCQ' && question.options.length > 0 ? (
+                                        question.type === 'MCQ' && (question.options || []).length > 0 ? (
                                             <div className="ml-6 mt-2">
-                                                {question.options.map((opt, i) => (
+                                                {(question.options || []).map((opt: any, i: number) => (
                                                     <div key={i} className="flex items-center gap-2 mb-1">
                                                         <span className={opt.isCorrect ? 'text-green-600 font-semibold' : ''}>
                                                             {String.fromCharCode(65 + i)}. {opt.text}
@@ -256,14 +473,33 @@ export default function PaperEditPage() {
                     }}
                     onOk={() => form.submit()}
                     width={700}
+                    footer={[
+                        <Button key="cancel" onClick={() => {
+                            setIsModalOpen(false);
+                            form.resetFields();
+                        }}>
+                            Cancel
+                        </Button>,
+                        (!editingQuestion && tempQueuedFiles.size > 0) && (
+                            <Button key="queue" type="dashed" onClick={handleQueueForBatch} icon={<DatabaseOutlined />} className="border-orange-500 text-orange-600">
+                                Queue for Batch
+                            </Button>
+                        ),
+                        <Button key="submit" type="primary" onClick={() => form.submit()}>
+                            {editingQuestion ? 'Update Question' : 'Add Question'}
+                        </Button>
+                    ]}
                 >
                     <Form form={form} layout="vertical" onFinish={handleSubmit}>
                         <Form.Item
                             name="text"
                             label="Question Text"
-                            rules={[{ required: true }]}
+                            rules={[{
+                                required: !tempQueuedFiles.has('question'),
+                                message: 'Please enter question text or add an image to batch'
+                            }]}
                         >
-                            <Input.TextArea rows={3} />
+                            <Input.TextArea rows={3} placeholder={tempQueuedFiles.has('question') ? "Text will be extracted in batch..." : "Enter question text..."} />
                         </Form.Item>
 
                         <Form.Item name="imageUrl" hidden>
@@ -278,7 +514,18 @@ export default function PaperEditPage() {
                                         text: text,
                                         imageUrl: url
                                     });
+                                    // Remove from temp queue if extracted immediately
+                                    const newTemp = new Map(tempQueuedFiles);
+                                    newTemp.delete('question');
+                                    setTempQueuedFiles(newTemp);
                                 }}
+                                onQueued={(file) => {
+                                    const newTemp = new Map(tempQueuedFiles);
+                                    newTemp.set('question', file);
+                                    setTempQueuedFiles(newTemp);
+                                }}
+                                allowBatch={true}
+                                isQueued={tempQueuedFiles.has('question')}
                                 label="Upload Question Image"
                             />
                         </div>
@@ -367,14 +614,22 @@ export default function PaperEditPage() {
                                                     endpoint="/api/questions/extract-from-image"
                                                     additionalData={{ paperId: paperId }}
                                                     onExtractionComplete={(text, url) => {
-                                                        const currentText = form.getFieldValue('correctAnswerText') || '';
-                                                        const newText = currentText ? `${currentText}\n\n[Extracted from Image]: ${text}` : text;
-
                                                         form.setFieldsValue({
-                                                            correctAnswerText: newText,
+                                                            correctAnswerText: text,
                                                             modelAnswerImageUrl: url
                                                         });
+                                                        // Remove from temp queue if extracted immediately
+                                                        const newTemp = new Map(tempQueuedFiles);
+                                                        newTemp.delete('modelAnswer');
+                                                        setTempQueuedFiles(newTemp);
                                                     }}
+                                                    onQueued={(file) => {
+                                                        const newTemp = new Map(tempQueuedFiles);
+                                                        newTemp.set('modelAnswer', file);
+                                                        setTempQueuedFiles(newTemp);
+                                                    }}
+                                                    allowBatch={true}
+                                                    isQueued={tempQueuedFiles.has('modelAnswer')}
                                                     label="Upload Model Answer Image"
                                                 />
                                             </div>
@@ -382,10 +637,13 @@ export default function PaperEditPage() {
                                             <Form.Item
                                                 name="correctAnswerText"
                                                 label="Model Answer Text / Explanation"
-                                                rules={[{ required: true }]}
+                                                rules={[{
+                                                    required: !tempQueuedFiles.has('modelAnswer'),
+                                                    message: 'Please enter model answer or add an image to batch'
+                                                }]}
                                                 tooltip="Used by AI for grading. Be descriptive."
                                             >
-                                                <Input.TextArea rows={4} />
+                                                <Input.TextArea rows={4} placeholder={tempQueuedFiles.has('modelAnswer') ? "Text will be extracted in batch..." : "Enter model answer..."} />
                                             </Form.Item>
                                         </div>
                                     </>
@@ -426,6 +684,18 @@ export default function PaperEditPage() {
                         </Form.Item>
                     </Form>
                 </Modal>
+
+                {/* Batch Process Floating Button */}
+                {(batchQueue.size > 0 || pendingQuestions.length > 0) && (
+                    <FloatButton
+                        icon={isProcessingBatch ? <LoadingOutlined /> : <DatabaseOutlined />}
+                        type="primary"
+                        onClick={handleProcessBatch}
+                        tooltip={<div>Process {batchQueue.size + pendingQuestions.length} queued items</div>}
+                        badge={{ count: batchQueue.size + pendingQuestions.length, color: 'orange' }}
+                        style={{ right: 94, bottom: 24, width: 64, height: 64 }}
+                    />
+                )}
             </div>
         </div>
     );
