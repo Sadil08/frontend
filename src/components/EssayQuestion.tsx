@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { QuestionAttemptDto } from '@/types';
 import { ImageUploadExtractor } from './ImageUploadExtractor';
+import { useAuth } from '@/context/AuthContext';
+import * as paperStorage from '@/utils/paperAttemptStorage';
 
 interface EssayQuestionProps {
     question: QuestionAttemptDto;
     questionNumber: number;
     answerText?: string;
+    imageUrl?: string;
+    extractedText?: string;
+    paperId: number;
     onAnswerChange: (questionId: number, answerText: string, imageUrl?: string, extractedText?: string) => void;
     disabled?: boolean;
 }
@@ -14,22 +19,46 @@ export default function EssayQuestion({
     question,
     questionNumber,
     answerText = '',
+    imageUrl: initialImageUrl = '',
+    extractedText: initialExtractedText = '',
+    paperId,
     onAnswerChange,
     disabled = false
 }: EssayQuestionProps) {
-
+    const { user } = useAuth();
     const [localAnswer, setLocalAnswer] = useState(answerText);
-    const [imageUrl, setImageUrl] = useState<string>('');
-    const [extractedText, setExtractedText] = useState<string>('');
+    const [imageUrl, setImageUrl] = useState<string>(initialImageUrl);
+    const [extractedText, setExtractedText] = useState<string>(initialExtractedText);
+    const [uploadCount, setUploadCount] = useState(0);
 
+    const MAX_UPLOADS = 2;
+
+    // Load upload count from localStorage on mount
+    useEffect(() => {
+        if (user && paperId) {
+            const count = paperStorage.getUploadCount(paperId, user.id, question.id);
+            setUploadCount(count);
+        }
+    }, [paperId, user, question.id]);
+
+    // Sync props with local state
     useEffect(() => {
         setLocalAnswer(answerText);
     }, [answerText]);
 
+    useEffect(() => {
+        if (initialImageUrl) setImageUrl(initialImageUrl);
+    }, [initialImageUrl]);
+
+    useEffect(() => {
+        if (initialExtractedText) setExtractedText(initialExtractedText);
+    }, [initialExtractedText]);
+
     // Determine if image upload is allowed
-    const allowImageAnswer = question.allowImageAnswer !== false; // Default to true if not specified
+    const allowImageAnswer = question.allowImageAnswer !== false;
     const recommendImage = question.answerTypeHint === 'diagram';
-    const recommendText = question.answerTypeHint === 'short';
+
+    const canUploadMore = uploadCount < MAX_UPLOADS;
 
     const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const text = e.target.value;
@@ -37,22 +66,18 @@ export default function EssayQuestion({
         onAnswerChange(question.id, text, imageUrl, extractedText);
     };
 
-    // DEBUG LOG
-    useEffect(() => {
-        console.log(`[EssayQuestion] Question ${question.id} props:`, {
-            requiresImageDisplay: question.requiresImageDisplay,
-            hideQuestionText: question.hideQuestionText,
-            imageUrl: question.imageUrl,
-            hasImage: !!question.imageUrl,
-        });
-    }, [question]);
-
     const handleImageExtract = (text: string, url: string) => {
         setExtractedText(text);
         setImageUrl(url);
 
-        // Pass image and extracted text separately.
-        // Do NOT append to localAnswer (which is for typed text).
+        // Increment upload count in localStorage
+        if (user && paperId) {
+            const newCount = paperStorage.incrementUploadCount(paperId, user.id, question.id);
+            setUploadCount(newCount);
+            console.log(`[EssayQuestion] Upload count for Q${question.id}: ${newCount}/${MAX_UPLOADS}`);
+        }
+
+        // Pass image and extracted text separately
         onAnswerChange(question.id, localAnswer, url, text);
     };
 
@@ -82,7 +107,7 @@ export default function EssayQuestion({
                         )}
                     </div>
 
-                    {/* Question Text - conditionally shown based on hideQuestionText */}
+                    {/* Question Text */}
                     {!question.hideQuestionText && (
                         <p className="text-gray-900 font-medium text-lg leading-relaxed whitespace-pre-wrap">
                             {question.text}
@@ -119,43 +144,63 @@ export default function EssayQuestion({
                     />
                 </div>
 
-                {/* Image Upload Section - Always visible if allowed */}
+                {/* Image Upload Section */}
                 {allowImageAnswer && !disabled && (
                     <div className="bg-gray-50 border-t border-gray-200 p-4">
                         {!imageUrl ? (
-                            <div className="flex items-center gap-4">
-                                <ImageUploadExtractor
-                                    endpoint={`/api/student-answers/extract-from-image?questionId=${question.id}`}
-                                    onExtractionComplete={handleImageExtract}
-                                    label="Attach Handwritten Answer / Diagram"
-                                />
-                                <span className="text-xs text-gray-500">
-                                    Upload a photo of your work. AI will extract and grade it.
-                                </span>
+                            <div className="space-y-3">
+                                {canUploadMore ? (
+                                    <>
+                                        <ImageUploadExtractor
+                                            endpoint={`/api/student-answers/extract-from-image?questionId=${question.id}`}
+                                            onExtractionComplete={handleImageExtract}
+                                            label="Attach Handwritten Answer / Diagram"
+                                            uploadCount={uploadCount}
+                                            maxUploads={MAX_UPLOADS}
+                                        />
+                                        <span className="text-xs text-gray-500">
+                                            Upload a photo of your work. AI will extract and grade it.
+                                        </span>
+                                    </>
+                                ) : (
+                                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                                        <p className="text-red-700 font-medium">Upload limit reached</p>
+                                        <p className="text-red-600 text-sm mt-1">
+                                            You have used all {MAX_UPLOADS} uploads for this question.
+                                        </p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="flex items-start gap-4 animate-fade-in">
                                 <div className="relative group">
                                     <img
-                                        src={imageUrl}
+                                        src={getFullImageUrl(imageUrl)}
                                         alt="Uploaded Answer"
                                         className="h-24 w-auto rounded border border-gray-300 shadow-sm"
                                     />
-                                    <button
-                                        onClick={() => { setImageUrl(''); setExtractedText(''); }}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors"
-                                        title="Remove Image"
-                                    >
-                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </button>
+                                    {/* Only show remove if student can re-upload */}
+                                    {canUploadMore && (
+                                        <button
+                                            onClick={() => { setImageUrl(''); setExtractedText(''); }}
+                                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow hover:bg-red-600 transition-colors"
+                                            title="Remove Image (uses 1 upload when you re-upload)"
+                                        >
+                                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    )}
                                 </div>
                                 <div className="flex-1">
                                     <p className="text-sm font-medium text-green-700 flex items-center gap-1 mb-1">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
                                         Image Uploaded & Processed
                                     </p>
-                                    <p className="text-xs text-gray-500 line-clamp-2">
-                                        Extracted content added to your answer.
+                                    <p className="text-xs text-gray-500">
+                                        Uploads used: {uploadCount}/{MAX_UPLOADS}
                                     </p>
                                 </div>
                             </div>

@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PaperAttemptDto, AnswerSubmissionDto } from '@/types';
 import { MCQQuestion } from './MCQQuestion';
 import EssayQuestion from './EssayQuestion';
 import { Modal } from 'antd';
+import { useAuth } from '@/context/AuthContext';
+import * as paperStorage from '@/utils/paperAttemptStorage';
 
 /**
  * Props for FullPaper component
@@ -34,9 +36,32 @@ export const FullPaper: React.FC<FullPaperProps> = ({
     onSubmit,
     isSubmitting = false
 }) => {
+    const { user } = useAuth();
     const [answers, setAnswers] = useState<Map<number, AnswerSubmissionDto>>(new Map());
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
+
+    // Load saved answers from localStorage on mount
+    useEffect(() => {
+        if (!paperData || !user) return;
+
+        const savedAnswers = paperStorage.loadPaperAttempt(paperData.id, user.id);
+        if (savedAnswers && savedAnswers.size > 0) {
+            // Convert StoredAnswer to AnswerSubmissionDto
+            const converted = new Map<number, AnswerSubmissionDto>();
+            savedAnswers.forEach((stored, questionId) => {
+                converted.set(questionId, {
+                    questionId: stored.questionId,
+                    answerText: stored.answerText,
+                    imageUrl: stored.imageUrl,
+                    extractedText: stored.extractedText,
+                    selectedOptionId: stored.selectedOptionId
+                });
+            });
+            setAnswers(converted);
+            console.log(`[FullPaper] Restored ${converted.size} answers from localStorage`);
+        }
+    }, [paperData, user]);
 
     // Handle scroll to show/hide scroll-to-top button
     React.useEffect(() => {
@@ -59,6 +84,14 @@ export const FullPaper: React.FC<FullPaperProps> = ({
             answerText: undefined
         });
         setAnswers(newAnswers);
+
+        // Save to localStorage
+        if (user && paperData) {
+            paperStorage.updateAnswer(paperData.id, user.id, questionId, {
+                questionId,
+                selectedOptionId
+            });
+        }
     };
 
     /**
@@ -68,15 +101,27 @@ export const FullPaper: React.FC<FullPaperProps> = ({
         const newAnswers = new Map(answers);
         const existing = newAnswers.get(questionId);
 
-        newAnswers.set(questionId, {
+        const updated = {
             questionId,
             selectedOptionId: undefined,
             answerText,
             // Preserve existing image/extracted text if not provided (e.g. typing update)
             imageUrl: imageUrl || existing?.imageUrl,
             extractedText: extractedText || existing?.extractedText
-        });
+        };
+
+        newAnswers.set(questionId, updated);
         setAnswers(newAnswers);
+
+        // Save to localStorage
+        if (user && paperData) {
+            paperStorage.updateAnswer(paperData.id, user.id, questionId, {
+                questionId,
+                answerText: updated.answerText,
+                imageUrl: updated.imageUrl,
+                extractedText: updated.extractedText
+            });
+        }
     };
 
     /**
@@ -110,6 +155,12 @@ export const FullPaper: React.FC<FullPaperProps> = ({
         const answerArray = Array.from(answers.values());
         onSubmit(answerArray);
         setShowSubmitModal(false);
+
+        // Clear localStorage after successful submission
+        if (user && paperData) {
+            paperStorage.clearPaperAttempt(paperData.id, user.id);
+            console.log('[FullPaper] Cleared localStorage after submission');
+        }
     };
 
     /**
@@ -189,6 +240,9 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                                 question={question}
                                 questionNumber={index + 1}
                                 answerText={answers.get(question.id)?.answerText || ''}
+                                imageUrl={answers.get(question.id)?.imageUrl || ''}
+                                extractedText={answers.get(question.id)?.extractedText || ''}
+                                paperId={paperData.id}
                                 onAnswerChange={handleEssayAnswer}
                             />
                         )}
