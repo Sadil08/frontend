@@ -26,6 +26,11 @@ const Header: React.FC = () => {
       icon: <DashboardOutlined />,
     },
     {
+      key: 'wallet',
+      label: <Link href="/wallet">My Wallet</Link>,
+      icon: <BarChartOutlined />,
+    },
+    {
       key: 'logout',
       label: 'Logout',
       icon: <LogoutOutlined />,
@@ -54,11 +59,13 @@ const Header: React.FC = () => {
               <>
                 <Link href="/bundles" className={`${isActive('/bundles')} transition-colors duration-200`}>Bundles</Link>
                 <Link href="/dashboard" className={`${isActive('/dashboard')} transition-colors duration-200`}>Dashboard</Link>
+                <Link href="/wallet" className={`${isActive('/wallet')} transition-colors duration-200`}>Wallet</Link>
               </>
             )}
             {user && user.role === 'ADMIN' && (
               <>
                 <Link href="/admin" className={`${isActive('/admin')} transition-colors duration-200`}>Admin Panel</Link>
+                <Link href="/admin/settings" className={`${isActive('/admin/settings')} transition-colors duration-200`}>Settings</Link>
               </>
             )}
           </nav>

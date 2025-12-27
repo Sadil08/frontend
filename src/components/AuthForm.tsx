@@ -24,7 +24,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
     setLoading(true);
     try {
       if (isRegister) {
-        const userResponse = await register(values.email, values.password, values.name);
+        const userResponse = await register(values.email, values.password, values.name, values.referralCode);
         const jwtResponse = await login(values.email, values.password);
         setAuth(jwtResponse.token, { id: userResponse.id, role: userResponse.role, email: userResponse.email });
         message.success('Registration successful! Welcome to EduApp.');
@@ -100,6 +100,25 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
                 className="rounded-lg"
               />
             </Form.Item>
+            {isRegister && (
+              <Form.Item
+                name="referralCode"
+                rules={[
+                  { pattern: /^[A-Z0-9]{8}$/, message: 'Code must be 8 alphanumeric characters' }
+                ]}
+              >
+                <Input
+                  prefix={<span className="text-gray-400 font-bold text-xs mt-1">REF</span>}
+                  placeholder="Referral Code (Optional)"
+                  className="rounded-lg"
+                  maxLength={8}
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase();
+                    form.setFieldValue('referralCode', val);
+                  }}
+                />
+              </Form.Item>
+            )}
 
             <Form.Item>
               <Button

@@ -6,6 +6,7 @@ interface User {
   id: number;
   role: 'STUDENT' | 'ADMIN';
   email: string;
+  referralCode?: string;
 }
 
 interface AuthContextType {
@@ -38,7 +39,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log('JWT Payload:', payload); // Debug logging
-        setUser({ id: payload.id, role: payload.role, email: payload.sub });
+        setUser({
+          id: payload.id,
+          role: payload.role,
+          email: payload.sub,
+          referralCode: payload.referralCode
+        });
       } catch (error) {
         console.error('Invalid token:', error);
         localStorage.removeItem('token');
@@ -53,7 +59,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Decode token to get user info
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({ id: payload.id, role: payload.role, email: payload.sub });
+      setUser({
+        id: payload.id,
+        role: payload.role,
+        email: payload.sub,
+        referralCode: payload.referralCode
+      });
     } catch (error) {
       console.error('Invalid token during login:', error);
       setUser(userData); // Fallback to provided userData

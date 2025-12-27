@@ -5,30 +5,37 @@ import { useCart } from '@/context/CartContext';
 import { Button, List, Card, Typography, Empty, message, Divider } from 'antd';
 import { DeleteOutlined, ShoppingOutlined, CreditCardOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import apiClient from '@/utils/apiClient';
 
 const { Title, Text } = Typography;
 
 const CartPage: React.FC = () => {
     const { items, removeFromCart, total, clearCart } = useCart();
     const [processing, setProcessing] = useState(false);
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
     const router = useRouter();
+
+    React.useEffect(() => {
+        const fetchBalance = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                if (token) {
+                    const res = await apiClient.get('/api/wallet/balance');
+                    setWalletBalance(res.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch wallet balance", err);
+            }
+        };
+        fetchBalance();
+    }, []);
 
     const handleCheckout = async () => {
         if (items.length === 0) return;
 
         setProcessing(true);
         try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                message.error("Please login to checkout");
-                router.push('/login');
-                return;
-            }
-
-            await axios.post('http://localhost:8080/api/purchase/checkout', {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await apiClient.post('/api/purchase/checkout', {});
 
             message.success("Purchase successful! You can now access your bundles.");
             clearCart();
@@ -131,17 +138,41 @@ const CartPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <Button
-                            type="primary"
-                            size="large"
-                            block
-                            onClick={handleCheckout}
-                            loading={processing}
-                            icon={<CreditCardOutlined />}
-                            className="mt-8 h-14 text-lg font-semibold bg-primary-600 hover:bg-primary-700 border-none shadow-lg shadow-primary-600/20 hover:shadow-primary-600/30 transition-all"
-                        >
-                            Checkout Now
-                        </Button>
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+                            <div className="flex justify-between items-center mb-1">
+                                <Text className="text-sm text-blue-800">Your Wallet Balance</Text>
+                                <Text className="font-bold text-blue-900">${walletBalance?.toFixed(2) || '0.00'}</Text>
+                            </div>
+                            {walletBalance !== null && walletBalance < total && (
+                                <Text className="text-xs text-red-600 block mt-2">
+                                    ⚠️ Insufficient balance to complete this purchase.
+                                </Text>
+                            )}
+                        </div>
+
+                        {walletBalance !== null && walletBalance < total ? (
+                            <Button
+                                type="primary"
+                                size="large"
+                                block
+                                onClick={() => router.push('/wallet')}
+                                className="h-14 text-lg font-semibold bg-amber-500 hover:bg-amber-600 border-none shadow-lg transition-all"
+                            >
+                                Top Up Wallet First
+                            </Button>
+                        ) : (
+                            <Button
+                                type="primary"
+                                size="large"
+                                block
+                                onClick={handleCheckout}
+                                loading={processing}
+                                icon={<CreditCardOutlined />}
+                                className="h-14 text-lg font-semibold bg-primary-600 hover:bg-primary-700 border-none shadow-lg shadow-primary-600/20 hover:shadow-primary-600/30 transition-all font-outfit"
+                            >
+                                Pay with Wallet
+                            </Button>
+                        )}
 
                         <div className="mt-6 text-center">
                             <Text type="secondary" className="text-xs">
