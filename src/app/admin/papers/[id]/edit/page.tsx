@@ -7,6 +7,7 @@ import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, Database
 import { adminService } from '@/services/adminService';
 import { extractBatch } from '@/services/batchExtractionService';
 import { AdminPaperDto, QuestionCreateDto, AdminQuestionDto } from '@/types/admin';
+import { LessonDto } from '@/types';
 
 import { MarksSummary } from '@/components/admin/MarksSummary';
 import { ImageUploadExtractor } from '@/components/ImageUploadExtractor';
@@ -25,6 +26,7 @@ export default function PaperEditPage() {
     const router = useRouter();
     const paperId = Number(params.id);
     const [paper, setPaper] = useState<AdminPaperDto | null>(null);
+    const [lessons, setLessons] = useState<LessonDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<AdminQuestionDto | null>(null);
@@ -45,10 +47,14 @@ export default function PaperEditPage() {
     const fetchPaper = async () => {
         setLoading(true);
         try {
-            const data = await adminService.getPaper(paperId);
-            setPaper(data);
+            const [paperData, lessonsData] = await Promise.all([
+                adminService.getPaper(paperId),
+                adminService.getLessons()
+            ]);
+            setPaper(paperData);
+            setLessons(lessonsData);
         } catch (error) {
-            console.error('Failed to load paper:', error);
+            console.error('Failed to load data:', error);
             message.error('Failed to load paper');
         } finally {
             setLoading(false);
@@ -74,6 +80,7 @@ export default function PaperEditPage() {
             type: question.type,
             correctAnswerText: question.correctAnswerText,
             marks: question.marks,
+            lessonId: question.lessonId,
             options: question.options,
             imageUrl: question.imageUrl,
             requiresImageDisplay: question.requiresImageDisplay,
@@ -128,6 +135,7 @@ export default function PaperEditPage() {
                 type: values.type,
                 correctAnswerText: correctAnswerText,
                 marks: values.marks,
+                lessonId: values.lessonId || null,  // Include lesson context
                 options: options,
                 imageUrl: values.imageUrl,
                 requiresImageDisplay: values.requiresImageDisplay,
@@ -529,6 +537,20 @@ export default function PaperEditPage() {
                                 label="Upload Question Image"
                             />
                         </div>
+
+                        <Form.Item
+                            name="lessonId"
+                            label="Lesson (For AI Context)"
+                            tooltip="Select the lesson this question belongs to. This helps the AI understand the context for better extraction accuracy."
+                        >
+                            <Select showSearch optionFilterProp="children" placeholder="Select lesson" allowClear>
+                                {lessons.map(l => (
+                                    <Select.Option key={l.id} value={l.id}>
+                                        {l.name}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
 
                         <Form.Item
                             name="type"

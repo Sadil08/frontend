@@ -8,11 +8,13 @@ import { AdminPaperDto, PaperCreateDto, AdminBundleDto } from '@/types/admin';
 import { ListTable } from '@/components/ListTable';
 
 import { useRouter } from 'next/navigation';
+import { SubjectDto } from '@/types';
 
 export default function PaperManagementPage() {
     const router = useRouter();
     const [papers, setPapers] = useState<AdminPaperDto[]>([]);
     const [bundles, setBundles] = useState<AdminBundleDto[]>([]);
+    const [subjects, setSubjects] = useState<SubjectDto[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -21,12 +23,14 @@ export default function PaperManagementPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [papersData, bundlesData] = await Promise.all([
+            const [papersData, bundlesData, subjectsData] = await Promise.all([
                 adminService.getPapers(),
-                adminService.getBundles()
+                adminService.getBundles(),
+                adminService.getSubjects()
             ]);
             setPapers(papersData);
             setBundles(bundlesData);
+            setSubjects(subjectsData);
         } catch (error) {
             console.error('Failed to load data:', error);
             message.error('Failed to load data');
@@ -53,7 +57,8 @@ export default function PaperManagementPage() {
             type: record.type,
             maxFreeAttempts: record.maxFreeAttempts,
             totalMarks: record.totalMarks,
-            bundleId: record.bundleId
+            bundleId: record.bundleId,
+            subjectId: record.subjectId
         });
         setIsModalOpen(true);
     };
@@ -89,7 +94,8 @@ export default function PaperManagementPage() {
                 type: values.type,
                 maxFreeAttempts: values.maxFreeAttempts || 3,
                 totalMarks: values.totalMarks || undefined,
-                bundleId: values.bundleId || undefined
+                bundleId: values.bundleId || undefined,
+                subjectId: values.subjectId || undefined
             };
 
             if (editingId) {
@@ -314,6 +320,15 @@ export default function PaperManagementPage() {
                                 {bundles.map(b => (
                                     <Select.Option key={b.id} value={b.id}>
                                         {b.name}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                        <Form.Item name="subjectId" label="Subject (Optional)" tooltip="Used for AI extraction context">
+                            <Select showSearch optionFilterProp="children" placeholder="Select subject" allowClear className="rounded-lg">
+                                {subjects.map(s => (
+                                    <Select.Option key={s.id} value={s.id}>
+                                        {s.name}
                                     </Select.Option>
                                 ))}
                             </Select>
