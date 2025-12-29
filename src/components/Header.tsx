@@ -60,12 +60,14 @@ const Header: React.FC = () => {
                 <Link href="/bundles" className={`${isActive('/bundles')} transition-colors duration-200`}>Bundles</Link>
                 <Link href="/dashboard" className={`${isActive('/dashboard')} transition-colors duration-200`}>Dashboard</Link>
                 <Link href="/wallet" className={`${isActive('/wallet')} transition-colors duration-200`}>Wallet</Link>
+                <Link href="/feedback" className={`${isActive('/feedback')} transition-colors duration-200`}>Feedback</Link>
               </>
             )}
             {user && user.role === 'ADMIN' && (
               <>
                 <Link href="/admin" className={`${isActive('/admin')} transition-colors duration-200`}>Admin Panel</Link>
                 <Link href="/admin/settings" className={`${isActive('/admin/settings')} transition-colors duration-200`}>Settings</Link>
+                <Link href="/admin/feedback" className={`${isActive('/admin/feedback')} transition-colors duration-200`}>Reviews & Improvements</Link>
               </>
             )}
           </nav>

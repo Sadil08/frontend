@@ -12,6 +12,7 @@ import {
   TeamOutlined,
   SafetyOutlined
 } from '@ant-design/icons';
+import ReviewsCarousel from '@/components/ReviewsCarousel';
 
 export default function LandingPage() {
   const { user } = useAuth();
@@ -280,6 +281,26 @@ export default function LandingPage() {
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+      </section>
+
+
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12 animate-slide-up">
+            <h2 className="text-4xl md:text-5xl font-bold text-secondary-900 mb-4">
+              What Our Students Say
+            </h2>
+            <p className="text-xl text-secondary-600 max-w-2xl mx-auto">
+              Join thousands of students who have improved their grades with EduApp
+            </p>
+          </div>
+
+          <div className="animate-slide-up" style={{ animationDelay: '0.2s' }}>
+            <ReviewsCarousel />
           </div>
         </div>
       </section>
