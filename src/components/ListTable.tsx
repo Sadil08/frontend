@@ -62,14 +62,21 @@ export function ListTable<T extends { id: number | string }>({
         : columns;
 
     return (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <Table
                 dataSource={data}
                 columns={tableColumns}
                 rowKey={rowKey}
                 loading={loading}
-                pagination={{ pageSize: 10 }}
+                pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} items`,
+                    className: "px-6 py-4"
+                }}
                 className="w-full"
+                rowClassName="hover:bg-gray-50 transition-colors"
+                scroll={{ x: true }}
             />
         </div>
     );

@@ -6,7 +6,7 @@ import { message, Tag } from 'antd';
 import { adminService } from '@/services/adminService';
 import { AdminUserDto } from '@/types/admin';
 import { ListTable } from '@/components/ListTable';
-import Header from '@/components/Header';
+
 
 export default function UserListPage() {
     const router = useRouter();
@@ -39,13 +39,15 @@ export default function UserListPage() {
             title: 'Username',
             dataIndex: 'username',
             key: 'username',
-            width: 150
+            width: 150,
+            render: (text: string) => <span className="font-medium text-gray-900">{text}</span>
         },
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
-            width: 200
+            width: 200,
+            render: (text: string) => <span className="text-gray-600">{text}</span>
         },
         {
             title: 'Role',
@@ -53,44 +55,50 @@ export default function UserListPage() {
             key: 'role',
             width: 100,
             render: (role: string) => (
-                <Tag color={role === 'ADMIN' ? 'red' : 'blue'}>{role}</Tag>
+                <Tag color={role === 'ADMIN' ? 'red' : 'blue'} className="rounded-full px-2">
+                    {role}
+                </Tag>
             )
         },
         {
             title: 'Bundles Purchased',
             dataIndex: 'totalBundlesPurchased',
             key: 'totalBundlesPurchased',
-            width: 130
+            width: 130,
+            render: (val: number) => <span className="font-medium">{val}</span>
         },
         {
             title: 'Total Attempts',
             dataIndex: 'totalAttempts',
             key: 'totalAttempts',
-            width: 120
+            width: 120,
+            render: (val: number) => <span className="font-medium">{val}</span>
         },
         {
             title: 'Created',
             dataIndex: 'createdAt',
             key: 'createdAt',
             width: 120,
-            render: (date: string) => new Date(date).toLocaleDateString()
+            render: (date: string) => <span className="text-gray-500">{new Date(date).toLocaleDateString()}</span>
         }
     ];
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Header />
-            <div className="max-w-7xl mx-auto p-6">
-                <div className="mb-6">
-                    <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-                    <p className="text-gray-600 mt-1">View and manage user accounts</p>
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+                <div className="mb-8 animate-slide-up">
+                    <h1 className="text-3xl font-bold text-secondary-900">User Management</h1>
+                    <p className="text-secondary-600 mt-1 text-lg">View and manage user accounts</p>
                 </div>
-                <ListTable
-                    data={users}
-                    columns={columns}
-                    loading={loading}
-                    onView={(record) => router.push(`/admin/users/${record.id}`)}
-                />
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    <ListTable
+                        data={users}
+                        columns={columns}
+                        loading={loading}
+                        onView={(record) => router.push(`/admin/users/${record.id}`)}
+                    />
+                </div>
             </div>
         </div>
     );

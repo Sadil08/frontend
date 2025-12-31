@@ -98,7 +98,7 @@ export default function PaperDetailsPage() {
     return (
         <ProtectedRoute role="STUDENT">
             <div className="page-wrapper">
-                <Header />
+
 
                 <div className="page-content max-w-6xl mx-auto">
                     {/* Breadcrumb */}
@@ -199,21 +199,21 @@ export default function PaperDetailsPage() {
                                         key="history"
                                     >
                                         <div id="attempt-history" className="mt-6">
-                                        <div className="mt-6">
-                                            <div className="mb-4">
-                                                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                                                    Your Attempts
-                                                </h2>
-                                                <p className="text-gray-600 text-sm">
-                                                    View all your previous attempts for this paper. Click on any attempt to see detailed results.
-                                                </p>
+                                            <div className="mt-6">
+                                                <div className="mb-4">
+                                                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                                                        Your Attempts
+                                                    </h2>
+                                                    <p className="text-gray-600 text-sm">
+                                                        View all your previous attempts for this paper. Click on any attempt to see detailed results.
+                                                    </p>
+                                                </div>
+                                                <AttemptHistory
+                                                    attempts={attempts}
+                                                    paperId={paperId}
+                                                    loading={loadingAttempts}
+                                                />
                                             </div>
-                                            <AttemptHistory
-                                                attempts={attempts}
-                                                paperId={paperId}
-                                                loading={loadingAttempts}
-                                            />
-                                        </div>
                                         </div>
                                     </TabPane>
 

@@ -17,6 +17,7 @@ export default function BundlePapers() {
     const [papers, setPapers] = useState<PaperDto[]>([]);
     const [bundle, setBundle] = useState<PaperBundleDetailDto | null>(null);
     const [attemptedPapers, setAttemptedPapers] = useState<Set<number>>(new Set());
+    const [attemptInfo, setAttemptInfo] = useState<Record<number, { remainingAttempts: number; maxAttempts: number }>>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -41,6 +42,35 @@ export default function BundlePapers() {
                     }
                 }
                 setAttemptedPapers(attempted);
+
+                // Fetch attempt info for all papers
+                if (papersData.length > 0) {
+                    try {
+                        const token = localStorage.getItem('token')?.trim();
+                        if (token) {
+                            const paperIds = papersData.map(p => p.id).join(',');
+                            const response = await fetch(
+                                `http://localhost:8080/api/papers/attempt-info?paperIds=${paperIds}`,
+                                { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            if (response.ok) {
+                                const data = await response.json();
+                                // Convert to simpler format
+                                const info: Record<number, { remainingAttempts: number; maxAttempts: number }> = {};
+                                Object.keys(data).forEach(key => {
+                                    const paperId = parseInt(key);
+                                    info[paperId] = {
+                                        remainingAttempts: data[key].remainingAttempts,
+                                        maxAttempts: data[key].maxAttempts
+                                    };
+                                });
+                                setAttemptInfo(info);
+                            }
+                        }
+                    } catch (err) {
+                        console.error('Failed to fetch attempt info:', err);
+                    }
+                }
             } catch (error) {
                 message.error('Failed to load papers');
             } finally {
@@ -58,7 +88,7 @@ export default function BundlePapers() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header />
+
             <div className="max-w-7xl mx-auto p-6">
                 <Button
                     type="text"
@@ -79,7 +109,8 @@ export default function BundlePapers() {
                         <PaperCard
                             key={paper.id}
                             paper={paper}
-                            attemptsRemaining={paper.maxFreeAttempts}
+                            attemptsRemaining={attemptInfo[paper.id]?.remainingAttempts ?? paper.maxFreeAttempts}
+                            maxAttempts={attemptInfo[paper.id]?.maxAttempts}
                             hasAttempted={attemptedPapers.has(paper.id)}
                         />
                     ))}

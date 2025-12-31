@@ -65,7 +65,7 @@ export default function ProgressPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header />
+
             <div className="max-w-7xl mx-auto p-6">
                 <h1 className="text-3xl font-bold text-gray-900 mb-6">Your Progress</h1>
                 <div className="card">

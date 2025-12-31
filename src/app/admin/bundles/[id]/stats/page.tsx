@@ -13,7 +13,7 @@ import {
 } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { BundleStatsDto } from '@/types/admin';
-import Header from '@/components/Header';
+
 
 export default function BundleStatsPage() {
     const params = useParams();
@@ -41,7 +41,7 @@ export default function BundleStatsPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50">
-                <Header />
+
                 <div className="max-w-7xl mx-auto p-6 flex justify-center items-center" style={{ minHeight: '60vh' }}>
                     <Spin size="large" />
                 </div>
@@ -52,7 +52,7 @@ export default function BundleStatsPage() {
     if (error || !stats) {
         return (
             <div className="min-h-screen bg-gray-50">
-                <Header />
+
                 <div className="max-w-7xl mx-auto p-6">
                     <Alert
                         message="Error"
@@ -101,7 +101,7 @@ export default function BundleStatsPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header />
+
             <div className="max-w-7xl mx-auto p-6">
                 <div className="mb-6">
                     <Button

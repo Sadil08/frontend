@@ -57,7 +57,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
           <span className="font-bold text-lg text-gray-900">
             {marks}/{record.paperTotalMarks || 100}
           </span>
-          {record.percentage !== undefined && (
+          {record.percentage !== undefined && record.percentage !== null && (
             <span className="text-sm text-gray-500">
               {record.percentage.toFixed(1)}%
             </span>
@@ -101,6 +101,7 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
       role="region"
       aria-label={`Leaderboard rankings for paper`}
       aria-live="polite"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
     >
       <Table
         columns={columns}
@@ -112,17 +113,22 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
         rowClassName={getRowClassName}
         scroll={{ x: 600 }}
         locale={{
-          emptyText: 'No entries yet. Be the first to opt-in!'
+          emptyText: (
+            <div className="py-12 flex flex-col items-center justify-center text-gray-500">
+              <TrophyOutlined className="text-4xl mb-4 text-gray-300" />
+              <p>No entries yet. Be the first to opt-in!</p>
+            </div>
+          )
         }}
         summary={() => {
           const userEntry = entries.find(entry => entry.isCurrentUser);
           if (userEntry) {
             return (
-              <Table.Summary.Row>
+              <Table.Summary.Row className="bg-blue-50">
                 <Table.Summary.Cell index={0} colSpan={4}>
-                  <div className="sr-only" aria-live="assertive">
-                    Your current ranking is {userEntry.rank} out of {entries.length} participants with a score of {userEntry.marks} out of {userEntry.paperTotalMarks || 100}
-                    {userEntry.percentage !== undefined && ` (${userEntry.percentage.toFixed(1)}%)`}.
+                  <div className="flex items-center justify-between px-4 py-2 text-blue-800 font-medium">
+                    <span>Your Rank: #{userEntry.rank}</span>
+                    <span>Score: {userEntry.marks}/{userEntry.paperTotalMarks || 100} ({userEntry.percentage?.toFixed(1)}%)</span>
                   </div>
                 </Table.Summary.Cell>
               </Table.Summary.Row>

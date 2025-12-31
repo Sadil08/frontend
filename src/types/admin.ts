@@ -38,7 +38,8 @@ export interface AdminBundleDto {
     description: string;
     price: number;
     type: 'MCQ' | 'ESSAY' | 'MIXED';
-    examType: string;
+    examTypeId: number;
+    examTypeName: string;
     subjectId: number | null;
     lessonId: number | null;
     isPastPaper: boolean;
@@ -54,7 +55,7 @@ export interface BundleCreateDto {
     description: string;
     price: number;
     type: 'MCQ' | 'ESSAY' | 'MIXED';
-    examType: string;
+    examTypeId: number;
     isPastPaper: boolean;
     subjectId?: number;
     lessonId?: number;
@@ -71,6 +72,8 @@ export interface AdminPaperDto {
     description: string;
     type: 'MCQ' | 'ESSAY' | 'MIXED';
     bundleId: number | null;
+    subjectId?: number | null;
+    subjectName?: string | null;
     maxFreeAttempts: number;
     /** Total marks for the paper (used for weighted scoring) */
     totalMarks?: number;
@@ -87,8 +90,16 @@ export interface AdminQuestionDto {
     id: number;
     paperId: number;
     text: string;
-    type: 'MCQ' | 'ESSAY' | 'SHORT_ANSWER';
+    type: 'MCQ' | 'ESSAY';
     correctAnswerText: string;
+    imageUrl?: string;
+    modelAnswerImageUrl?: string;
+    lessonId?: number | null;
+    lessonName?: string | null;
+    requiresImageDisplay?: boolean;
+    hideQuestionText?: boolean;
+    allowImageAnswer?: boolean;
+    answerTypeHint?: 'short' | 'essay' | 'diagram';
     marks: number;
     options: AdminQuestionOptionDto[];
 }
@@ -109,13 +120,22 @@ export interface PaperCreateDto {
     /** Total marks for the paper (used for weighted scoring) */
     totalMarks?: number;
     bundleId?: number;
+    subjectId?: number;
 }
 
 /** Question create/update request DTO */
 export interface QuestionCreateDto {
     text: string;
-    type: 'MCQ' | 'ESSAY' | 'SHORT_ANSWER';
+    type: 'MCQ' | 'ESSAY';
     correctAnswerText: string;
+    imageUrl?: string;
+    modelAnswerImageUrl?: string;
+    extractedText?: string;
+    lessonId?: number | null;
+    requiresImageDisplay?: boolean;
+    hideQuestionText?: boolean;
+    allowImageAnswer?: boolean;
+    answerTypeHint?: 'short' | 'essay' | 'diagram';
     marks: number;
     options: AdminQuestionOptionDto[];
 }

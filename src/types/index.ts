@@ -22,6 +22,13 @@ export interface UserResponse {
   role: 'STUDENT' | 'ADMIN';
 }
 
+/** Exam Type entity */
+export interface ExamType {
+  id: number;
+  name: string;
+  description: string;
+}
+
 /**
  * Bundle and Paper types
  */
@@ -34,6 +41,8 @@ export interface PaperBundleSummaryDto {
   price: number;
   type: 'MCQ' | 'ESSAY' | 'MIXED';
   examType: string;
+  subjectId?: number;
+  lessonId?: number;
   isPastPaper: boolean;
 }
 
@@ -57,7 +66,8 @@ export interface PaperBundleDetailDto {
   description: string;
   price: number;
   type: 'MCQ' | 'ESSAY' | 'MIXED';
-  examType: string;
+  examTypeId: number;
+  examTypeName: string;
   isPastPaper: boolean;
   papers: PaperDto[];
 }
@@ -90,6 +100,11 @@ export interface QuestionAttemptDto {
   paperId: number;
   text: string;
   type: 'MCQ' | 'ESSAY';
+  imageUrl?: string;
+  requiresImageDisplay?: boolean;
+  hideQuestionText?: boolean;
+  allowImageAnswer?: boolean;
+  answerTypeHint?: 'short' | 'essay' | 'diagram';
   marks: number;
   options: OptionAttemptDto[];
 }
@@ -105,6 +120,11 @@ export interface PaperAttemptDto {
   /** Total marks for the paper (used for weighted scoring) */
   totalMarks?: number;
   questions: QuestionAttemptDto[];
+  // Attempt limit tracking
+  attemptsMade?: number;
+  maxAttempts?: number;
+  remainingAttempts?: number;
+  canAttempt?: boolean;
 }
 
 /**
@@ -116,6 +136,8 @@ export interface AnswerSubmissionDto {
   questionId: number;
   selectedOptionId?: number;
   answerText?: string;
+  imageUrl?: string;
+  extractedText?: string;
 }
 
 /** Complete paper submission payload */
@@ -140,6 +162,10 @@ export interface StudentAnswerDto {
   marksAwarded: number | null;
   marksAvailable: number;
   aiFeedback: string | null;
+  imageUrl?: string;
+  extractedText?: string;
+  questionImageUrl?: string;
+  hideQuestionText?: boolean;
   // Correct answer fields (only available after submission)
   correctAnswerText?: string | null;
   correctOptionId?: number | null;
@@ -174,7 +200,13 @@ export interface QuestionDto {
   text: string;
   type: 'MCQ' | 'ESSAY';
   correctAnswerText?: string;
+  imageUrl?: string;
+  extractedText?: string;
+  requiresImageDisplay?: boolean;
+  allowImageAnswer?: boolean;
+  answerTypeHint?: 'short' | 'essay' | 'diagram';
   paperId: number;
+  hideQuestionText?: boolean;
 }
 
 /** Question option with correct flag (admin use) */
@@ -250,7 +282,8 @@ export interface StudentBundleAccess {
   bundleDescription: string;
   price: number;
   type: string;
-  examType: string;
+  examTypeId: number;
+  examTypeName: string;
   isPastPaper: boolean;
   subjectName?: string;
   lessonName?: string;

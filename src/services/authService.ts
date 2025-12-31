@@ -6,7 +6,7 @@ export const login = async (email: string, password: string): Promise<JwtRespons
   return response.data;
 };
 
-export const register = async (email: string, password: string, name: string): Promise<UserResponse> => {
-  const response = await apiClient.post<UserResponse>('/api/auth/register', { email, password, name });
+export const register = async (email: string, password: string, name: string, referralCode?: string): Promise<UserResponse> => {
+  const response = await apiClient.post<UserResponse>('/api/auth/register', { email, password, name, referralCode });
   return response.data;
 };

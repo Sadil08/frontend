@@ -1,5 +1,19 @@
 import apiClient from '@/utils/apiClient';
-import { PaperBundleDetailDto, PaperBundleSummaryDto, StudentBundleAccess } from '@/types';
+import { PaperBundleDetailDto, PaperBundleSummaryDto, StudentBundleAccess, SubjectDto, LessonDto } from '@/types';
+
+/**
+ * Filter parameters for bundle queries
+ */
+export interface BundleFilterParams {
+  type?: 'MCQ' | 'ESSAY' | 'MIXED';
+  examTypeId?: number;
+  subjectId?: number;
+  lessonId?: number;
+  isPastPaper?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  name?: string;
+}
 
 /**
  * Service for managing paper bundles
@@ -7,12 +21,34 @@ import { PaperBundleDetailDto, PaperBundleSummaryDto, StudentBundleAccess } from
  */
 export const bundleService = {
   /**
-   * Get all public bundles with optional filters
+   * Filter bundles by multiple criteria using the new filter endpoint
+   * @param filters - Optional filter parameters
+   * @returns Array of bundle summaries matching the filters
+   */
+  filterBundles: async (filters?: BundleFilterParams): Promise<PaperBundleSummaryDto[]> => {
+    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles/filter', { params: filters });
+    return response.data;
+  },
+
+  /**
+   * Search bundles by name using case-insensitive partial matching
+   * @param name - Search term
+   * @returns Array of bundle summaries matching the search term
+   */
+  searchBundles: async (name: string): Promise<PaperBundleSummaryDto[]> => {
+    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles/search', {
+      params: { name }
+    });
+    return response.data;
+  },
+
+  /**
+   * Get all public bundles with optional filters (uses filter endpoint)
    * @param filters - Optional query parameters for filtering
    * @returns Array of bundle summaries
    */
-  getBundles: async (filters?: Record<string, string | number>): Promise<PaperBundleSummaryDto[]> => {
-    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles', { params: filters });
+  getBundles: async (filters?: BundleFilterParams): Promise<PaperBundleSummaryDto[]> => {
+    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles/filter', { params: filters });
     return response.data;
   },
 
@@ -42,11 +78,43 @@ export const bundleService = {
    */
   purchaseBundle: async (id: number): Promise<void> => {
     await apiClient.post(`/api/paper-bundles/${id}/purchase`);
+  },
+
+  /**
+   * Get all subjects
+   * @returns Array of subjects
+   */
+  getSubjects: async (): Promise<SubjectDto[]> => {
+    const response = await apiClient.get<SubjectDto[]>('/api/subjects');
+    return response.data;
+  },
+
+  /**
+   * Get all lessons
+   * @returns Array of lessons
+   */
+  getLessons: async (): Promise<LessonDto[]> => {
+    const response = await apiClient.get<LessonDto[]>('/api/lessons');
+    return response.data;
+  },
+
+  /**
+   * Get all exam types
+   * @returns Array of exam types
+   */
+  getExamTypes: async (): Promise<any[]> => {
+    const response = await apiClient.get<any[]>('/api/exam-types');
+    return response.data;
   }
 };
 
 // Named exports for backward compatibility
+export const filterBundles = bundleService.filterBundles;
+export const searchBundles = bundleService.searchBundles;
 export const getBundles = bundleService.getBundles;
 export const getBundle = bundleService.getBundle;
 export const getMyBundles = bundleService.getMyBundles;
 export const purchaseBundle = bundleService.purchaseBundle;
+export const getSubjects = bundleService.getSubjects;
+export const getLessons = bundleService.getLessons;
+export const getExamTypes = bundleService.getExamTypes;
