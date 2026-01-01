@@ -38,7 +38,7 @@ export const BundleCard: React.FC<BundleCardProps> = ({ bundleAccess }) => {
         <div className="flex justify-between items-start mb-4">
           <div className="flex gap-2">
             <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-primary-50 text-primary-700 uppercase tracking-wide">
-              {bundleAccess.examType}
+              {bundleAccess.examTypeName}
             </span>
             {bundleAccess.isPastPaper && (
               <span className="px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-50 text-amber-700 uppercase tracking-wide">
