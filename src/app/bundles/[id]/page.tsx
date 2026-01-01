@@ -8,7 +8,7 @@ import { PaperCard } from '@/components/PaperCard';
 import { PaperCardSkeleton } from '@/components/LoadingSkeleton';
 import { bundleService } from '@/services/bundleService';
 import { paperService } from '@/services/paperService';
-import { PaperBundleDto, PaperDto } from '@/types';
+import { PaperBundleDetailDto, PaperDto } from '@/types';
 import { message } from 'antd';
 
 /**
@@ -20,7 +20,7 @@ export default function BundleDetailPage() {
     const router = useRouter();
     const bundleId = parseInt(params.id as string);
 
-    const [bundle, setBundle] = useState<PaperBundleDto | null>(null);
+    const [bundle, setBundle] = useState<PaperBundleDetailDto | null>(null);
     const [papers, setPapers] = useState<PaperDto[]>([]);
     const [attemptedPapers, setAttemptedPapers] = useState<Set<number>>(new Set());
     const [hasAccess, setHasAccess] = useState(false);
@@ -140,7 +140,7 @@ export default function BundleDetailPage() {
                                             <h1 className="text-4xl font-bold mb-2">{bundle.name}</h1>
                                             <div className="flex flex-wrap gap-2 mb-4">
                                                 <span className="bg-white/20 px-3 py-1 rounded-full text-sm backdrop-blur-sm">
-                                                    {bundle.examType}
+                                                    {bundle.examTypeName}
                                                 </span>
                                                 <span className="bg-white/20 px-3 py-1 rounded-full text-sm backdrop-blur-sm">
                                                     {bundle.type}
