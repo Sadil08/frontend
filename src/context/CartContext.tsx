@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { message } from 'antd';
-import axios from 'axios';
+import apiClient from '@/utils/apiClient';
 
 interface Bundle {
     id: number;
@@ -35,9 +35,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
 
-            const response = await axios.get('http://localhost:8080/api/carts/my-cart', {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await apiClient.get('/api/carts/my-cart');
 
             if (response.data && response.data.bundles) {
                 setItems(response.data.bundles);
@@ -61,9 +59,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return;
             }
 
-            await axios.post(`http://localhost:8080/api/carts/my-cart/items/${bundle.id}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await apiClient.post(`/api/carts/my-cart/items/${bundle.id}`);
 
             setItems(prev => {
                 if (prev.some(item => item.id === bundle.id)) return prev;
@@ -81,9 +77,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const token = localStorage.getItem('token')?.trim();
             if (!token) return;
 
-            await axios.delete(`http://localhost:8080/api/carts/my-cart/items/${id}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await apiClient.delete(`/api/carts/my-cart/items/${id}`);
 
             setItems(prev => prev.filter(item => item.id !== id));
             message.success("Removed from cart");
