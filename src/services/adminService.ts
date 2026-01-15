@@ -182,8 +182,10 @@ export const adminService = {
      * Get all users with statistics
      * GET /api/admin/users
      */
-    getUsers: async (): Promise<AdminUserDto[]> => {
-        const response = await apiClient.get<AdminUserDto[]>('/api/admin/users');
+    getUsers: async (search?: string): Promise<AdminUserDto[]> => {
+        const response = await apiClient.get<AdminUserDto[]>('/api/admin/users', {
+            params: { search }
+        });
         return response.data;
     },
 
