@@ -38,10 +38,14 @@ export const paperService = {
     /**
      * Attempt a paper - retrieves all questions without correct answers
      * @param paperId - Paper ID to attempt
+     * @param forceNew - If true, abandons existing IN_PROGRESS attempt and starts fresh
      * @returns Paper attempt data with questions
      */
-    attemptPaper: async (paperId: number): Promise<PaperAttemptDto> => {
-        const response = await apiClient.get<PaperAttemptDto>(`/api/papers/${paperId}/attempt`);
+    attemptPaper: async (paperId: number, forceNew = false): Promise<PaperAttemptDto> => {
+        const response = await apiClient.get<PaperAttemptDto>(
+            `/api/papers/${paperId}/attempt`,
+            { params: forceNew ? { forceNew: 'true' } : undefined }
+        );
         return response.data;
     },
 
@@ -106,6 +110,18 @@ export const paperService = {
     getAttemptResults: async (attemptId: number): Promise<AttemptDetails> => {
         const response = await apiClient.get<AttemptDetails>(
             `/api/papers/attempts/${attemptId}`
+        );
+        return response.data;
+    },
+
+    /**
+     * Retry AI analysis for a failed/incomplete attempt
+     * @param attemptId - Attempt ID to retry
+     * @returns Success status and remaining retries
+     */
+    retryAnalysis: async (attemptId: number): Promise<{ success: boolean, message: string, attemptCount: number, remainingAttempts: number }> => {
+        const response = await apiClient.post(
+            `/api/student-answers/attempts/${attemptId}/retry-analysis`
         );
         return response.data;
     }

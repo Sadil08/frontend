@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { FullPaper } from '@/components/FullPaper';
@@ -24,7 +24,9 @@ import { message } from 'antd';
 export default function PaperAttemptPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const paperId = parseInt(params.id as string);
+    const forceNew = searchParams.get('forceNew') === 'true';
 
     const [paperData, setPaperData] = useState<PaperAttemptDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -33,17 +35,49 @@ export default function PaperAttemptPage() {
     const [error, setError] = useState<string | null>(null);
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
+    // Prevent duplicate API calls - track if we've already fetched this attempt
+    const attemptFetchedRef = React.useRef(false);
+
     /**
      * Fetch paper attempt data
      */
     const fetchPaperAttempt = useCallback(async () => {
+        // Prevent duplicate calls (React StrictMode calls useEffect twice in dev)
+        if (attemptFetchedRef.current) {
+            console.log('[PaperAttempt] Skipping duplicate fetch');
+            return;
+        }
+
+        attemptFetchedRef.current = true;
+
         try {
             setLoading(true);
             setError(null);
             setStartTime(Date.now());
 
-            const data = await paperService.attemptPaper(paperId);
+            // Pass forceNew to API - creates fresh attempt when retrying
+            const data = await paperService.attemptPaper(paperId, forceNew);
             setPaperData(data);
+
+            // IMPORTANT: If this is a fresh retry (forceNew=true), clear localStorage
+            // to prevent loading stale draft data from previous attempts
+            if (forceNew) {
+                const userId = localStorage.getItem('userId');
+                if (userId) {
+                    const storageKey = `paper_${paperId}_user_${userId}`;
+                    localStorage.removeItem(storageKey);
+                    console.log('[PaperAttempt] Cleared localStorage for fresh retry');
+                }
+
+                // Remove forceNew from URL to prevent accidentally creating another attempt on reload
+                const newParams = new URLSearchParams(searchParams.toString());
+                newParams.delete('forceNew');
+                const newPath = newParams.toString()
+                    ? `/papers/${paperId}/attempt?${newParams.toString()}`
+                    : `/papers/${paperId}/attempt`;
+
+                router.replace(newPath, { scroll: false });
+            }
         } catch (err: any) {
             console.error('Error fetching paper attempt:', err);
             setError(err.response?.data?.message || 'Failed to load paper');
@@ -56,7 +90,12 @@ export default function PaperAttemptPage() {
         } finally {
             setLoading(false);
         }
-    }, [paperId, router]);
+    }, [paperId, router, forceNew]);
+
+    // Reset the fetch guard when paperId or forceNew changes
+    useEffect(() => {
+        attemptFetchedRef.current = false;
+    }, [paperId, forceNew]);
 
     useEffect(() => {
         if (paperId) {

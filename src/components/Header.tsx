@@ -1,11 +1,12 @@
 'use client';
 
-import { Button, Dropdown, MenuProps, Avatar } from 'antd';
+import { useState } from 'react';
+import { Button, Dropdown, MenuProps, Avatar, Drawer } from 'antd';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, TrophyOutlined, BarChartOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, DashboardOutlined, ShoppingCartOutlined, TrophyOutlined, BarChartOutlined, MenuOutlined } from '@ant-design/icons';
 import { Badge } from 'antd';
 
 const Header: React.FC = () => {
@@ -14,9 +15,12 @@ const Header: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const handleLogout = () => {
     logout();
     router.push('/');
+    setMobileMenuOpen(false);
   };
 
   const menuItems: MenuProps['items'] = [
@@ -40,6 +44,39 @@ const Header: React.FC = () => {
   ];
 
   const isActive = (path: string) => pathname === path ? 'text-primary-600 font-semibold' : 'text-secondary-600 hover:text-primary-600';
+
+  // Mobile menu content
+  const mobileMenuContent = (
+    <div className="flex flex-col space-y-4 pt-4">
+      <Link href="/" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/')} text-lg`}>Home</Link>
+      {user && user.role === 'STUDENT' && (
+        <>
+          <Link href="/bundles" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/bundles')} text-lg`}>Bundles</Link>
+          <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/dashboard')} text-lg`}>Dashboard</Link>
+          <Link href="/wallet" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/wallet')} text-lg`}>Wallet</Link>
+          <Link href="/feedback" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/feedback')} text-lg`}>Feedback</Link>
+        </>
+      )}
+      {user && user.role === 'ADMIN' && (
+        <>
+          <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/admin')} text-lg`}>Admin Panel</Link>
+          <Link href="/admin/analytics" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/admin/analytics')} text-lg`}>Analytics</Link>
+          <Link href="/admin/settings" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/admin/settings')} text-lg`}>Settings</Link>
+          <Link href="/admin/feedback" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/admin/feedback')} text-lg`}>Reviews & Improvements</Link>
+        </>
+      )}
+      {!user && (
+        <div className="flex flex-col space-y-3 mt-4">
+          <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+            <Button block size="large">Log in</Button>
+          </Link>
+          <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
+            <Button type="primary" block size="large">Sign up</Button>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-secondary-200 shadow-sm">
@@ -66,6 +103,7 @@ const Header: React.FC = () => {
             {user && user.role === 'ADMIN' && (
               <>
                 <Link href="/admin" className={`${isActive('/admin')} transition-colors duration-200`}>Admin Panel</Link>
+                <Link href="/admin/analytics" className={`${isActive('/admin/analytics')} transition-colors duration-200`}>Analytics</Link>
                 <Link href="/admin/settings" className={`${isActive('/admin/settings')} transition-colors duration-200`}>Settings</Link>
                 <Link href="/admin/feedback" className={`${isActive('/admin/feedback')} transition-colors duration-200`}>Reviews & Improvements</Link>
               </>
@@ -91,7 +129,7 @@ const Header: React.FC = () => {
                 </Dropdown>
               </>
             ) : (
-              <div className="flex items-center space-x-3">
+              <div className="hidden md:flex items-center space-x-3">
                 <Link href="/login">
                   <Button type="text" className="text-secondary-600 hover:text-primary-600 font-medium">
                     Log in
@@ -104,9 +142,29 @@ const Header: React.FC = () => {
                 </Link>
               </div>
             )}
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <Button
+                type="text"
+                icon={<MenuOutlined style={{ fontSize: '20px' }} />}
+                onClick={() => setMobileMenuOpen(true)}
+              />
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Drawer */}
+      <Drawer
+        title="Menu"
+        placement="right"
+        onClose={() => setMobileMenuOpen(false)}
+        open={mobileMenuOpen}
+        width={280}
+      >
+        {mobileMenuContent}
+      </Drawer>
     </header>
   );
 };

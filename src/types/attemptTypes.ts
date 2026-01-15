@@ -18,6 +18,12 @@ export interface AttemptHistoryItem {
     /** Paper's configured total marks (for percentage calculation) */
     paperTotalMarks?: number;
     overallFeedbackSummary: string;
+    /** Whether AI analysis has completed */
+    analysisCompleted: boolean;
+    /** Error message if analysis failed */
+    analysisError?: string;
+    /** Number of submission/retry attempts */
+    submissionCount?: number;
 }
 
 /**
@@ -63,6 +69,10 @@ export interface AttemptDetails {
     paperTotalMarks?: number;
     overallFeedback: string;
     answers: AttemptAnswer[];
+    // Analysis status fields
+    analysisError?: string;
+    analysisCompleted: boolean;
+    submissionCount: number;
 }
 
 /**

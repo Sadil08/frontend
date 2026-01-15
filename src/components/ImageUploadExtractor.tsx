@@ -11,6 +11,13 @@ interface ImageUploadExtractorProps {
     onQueued?: (file: File) => void;
     label?: string;
     additionalData?: Record<string, any>;
+    // New extraction tracking props
+    attemptId?: number;  // Required for student extraction tracking
+    questionId?: number; // Required for student extraction tracking
+    extractionsUsed?: number;  // From backend response
+    extractionsMax?: number;   // Default: 2
+    onExtractionCountUpdate?: (used: number, remaining: number) => void;  // Callback for extraction count changes
+    // Old props (keep for backward compatibility with admin)
     answerId?: number;
     uploadCount?: number;
     maxUploads?: number;
@@ -24,6 +31,11 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
     onQueued,
     label = "Upload Image & Extract Text",
     additionalData = {},
+    attemptId,
+    questionId,
+    extractionsUsed: initialExtractionsUsed = 0,
+    extractionsMax = 2,
+    onExtractionCountUpdate,
     answerId,
     uploadCount = 0,
     maxUploads = 2,
@@ -39,7 +51,22 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
         initialIsQueued ? 'queued' : 'idle'
     );
 
+    // Track extractions (for new system)
+    const [extractionsUsed, setExtractionsUsed] = useState(initialExtractionsUsed);
+    const [extractionsRemaining, setExtractionsRemaining] = useState(extractionsMax - initialExtractionsUsed);
+
+    // Legacy upload limit (for backward compatibility)
     const uploadLimit = useUploadLimit(uploadCount, maxUploads);
+
+    // Sync extractionsUsed state with props when attempts change (e.g. new attempt started)
+    React.useEffect(() => {
+        setExtractionsUsed(initialExtractionsUsed);
+        setExtractionsRemaining(extractionsMax - initialExtractionsUsed);
+    }, [initialExtractionsUsed, extractionsMax]);
+
+    // Determine if using new extraction tracking
+    const isExtractionTracking = attemptId !== undefined && questionId !== undefined;
+    const canExtract = isExtractionTracking ? extractionsUsed < extractionsMax : uploadLimit.canUpload;
 
     const handleFileSelect = async (options: any) => {
         const { file, onSuccess, onError } = options;
@@ -48,8 +75,15 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
         setCompressedFile(null);
         setStatus('idle');
 
-        // Check upload limit before proceeding (only for student answers)
-        if (answerId && !uploadLimit.canUpload) {
+        // Check extraction limit before proceeding
+        if (isExtractionTracking && !canExtract) {
+            message.error(`Extraction limit reached. Maximum ${extractionsMax} extractions allowed per question.`);
+            onError(new Error('Extraction limit reached'));
+            return;
+        }
+
+        // Legacy: Check upload limit for old system
+        if (answerId && !isExtractionTracking && !uploadLimit.canUpload) {
             message.error(`Upload limit reached. Maximum ${maxUploads} uploads allowed per question.`);
             onError(new Error('Upload limit reached'));
             return;
@@ -104,6 +138,15 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
             const formData = new FormData();
             formData.append('file', cFile);
 
+            // Add attemptId and questionId for extraction tracking
+            if (attemptId) {
+                formData.append('attemptId', attemptId.toString());
+            }
+            if (questionId) {
+                formData.append('questionId', questionId.toString());
+            }
+
+            // Legacy: answerId for old system
             if (answerId) {
                 formData.append('answerId', answerId.toString());
             }
@@ -125,15 +168,41 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
+
+                // Handle extraction limit exceeded (HTTP 403)
+                if (response.status === 403) {
+                    if (errorData.extractionsUsed !== undefined) {
+                        setExtractionsUsed(errorData.extractionsUsed);
+                        setExtractionsRemaining(0);
+                    }
+                    throw new Error(errorData.message || 'Extraction limit reached');
+                }
+
                 throw new Error(errorData.error || 'Extraction failed');
             }
 
             const data = await response.json();
+
+            // Update extraction tracking from response
+            if (data.extractionsUsed !== undefined) {
+                setExtractionsUsed(data.extractionsUsed);
+                setExtractionsRemaining(data.extractionsRemaining || 0);
+
+                // Notify parent component of the change
+                if (onExtractionCountUpdate) {
+                    onExtractionCountUpdate(data.extractionsUsed, data.extractionsRemaining || 0);
+                }
+            }
+
             onExtractionComplete(data.extractedText, data.imageUrl);
             setFileList([{ ...originalFile, status: 'done', url: data.imageUrl }]);
             if (onSuccess) onSuccess(data);
             setStatus('extracted');
-            message.success('Text extracted successfully!');
+
+            const remainingText = data.extractionsRemaining !== undefined
+                ? ` (${data.extractionsRemaining} remaining)`
+                : '';
+            message.success(`Text extracted successfully!${remainingText}`);
         } catch (err: any) {
             message.error(err.message || 'Extraction failed.');
         } finally {
@@ -175,8 +244,19 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
                 />
             )}
 
-            {/* Upload Limit Warning (Student side) */}
-            {answerId && uploadLimit.isLastUpload && status === 'idle' && (
+            {/* Extraction Limit Warning (New System) */}
+            {isExtractionTracking && extractionsRemaining === 1 && status === 'idle' && (
+                <Alert
+                    type="warning"
+                    message="Last extraction remaining"
+                    description={`You have 1 of ${extractionsMax} extractions left for this question.`}
+                    showIcon
+                    className="mb-2"
+                />
+            )}
+
+            {/* Upload Limit Warning (Legacy System) */}
+            {answerId && !isExtractionTracking && uploadLimit.isLastUpload && status === 'idle' && (
                 <Alert
                     type="warning"
                     message="Last upload remaining"
@@ -193,9 +273,15 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
                     onChange={({ fileList }) => setFileList(fileList)}
                     maxCount={1}
                     listType="picture"
-                    disabled={isProcessing || (!!answerId && !uploadLimit.canUpload)}
+                    disabled={isProcessing || !canExtract}
                 >
-                    {answerId ? (
+                    {isExtractionTracking ? (
+                        <Badge count={`${extractionsUsed}/${extractionsMax}`} style={{ backgroundColor: canExtract ? '#52c41a' : '#ff4d4f' }}>
+                            <Button icon={isProcessing ? <Spin size="small" /> : <UploadOutlined />} disabled={!canExtract || isProcessing}>
+                                {label}
+                            </Button>
+                        </Badge>
+                    ) : answerId ? (
                         <Badge count={`${uploadCount}/${maxUploads}`} style={{ backgroundColor: uploadLimit.canUpload ? '#52c41a' : '#ff4d4f' }}>
                             <Button icon={isProcessing ? <Spin size="small" /> : <UploadOutlined />} disabled={!uploadLimit.canUpload || isProcessing}>
                                 {label}
@@ -208,8 +294,15 @@ export const ImageUploadExtractor: React.FC<ImageUploadExtractorProps> = ({
                     )}
                 </Upload>
 
-                {/* Counter text (Student side) */}
-                {answerId && (
+                {/* Counter text (New Extraction Tracking) */}
+                {isExtractionTracking && (
+                    <span className={`text-xs font-medium ${canExtract ? 'text-gray-600' : 'text-red-600'}`}>
+                        {canExtract ? `${extractionsRemaining} extraction${extractionsRemaining !== 1 ? 's' : ''} remaining` : 'Extraction limit reached'}
+                    </span>
+                )}
+
+                {/* Counter text (Legacy System) */}
+                {answerId && !isExtractionTracking && (
                     <span className={`text-xs font-medium ${uploadLimit.canUpload ? 'text-gray-600' : 'text-red-600'}`}>
                         {uploadLimit.message}
                     </span>

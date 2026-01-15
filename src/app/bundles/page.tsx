@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Pagination } from 'antd';
 
 export const dynamic = 'force-dynamic';
 import SearchBar from '@/components/SearchBar';
@@ -20,6 +21,14 @@ function BundlesContent() {
   // Initialize filters from URL parameters
   const [filterState, setFilterState] = useState<BundleFilterParams>(() => {
     const params: BundleFilterParams = {};
+
+    const page = searchParams.get('page');
+    if (page) params.page = parseInt(page);
+    else params.page = 0;
+
+    const size = searchParams.get('size');
+    if (size) params.size = parseInt(size);
+    else params.size = 12; // Default page size for frontend
 
     const type = searchParams.get('type');
     if (type === 'MCQ' || type === 'ESSAY' || type === 'MIXED') {
@@ -83,14 +92,14 @@ function BundlesContent() {
   // Serialize filters to prevent object recreations
   const filtersKey = JSON.stringify(filterState);
   const filters = useMemo(() => filterState, [filtersKey]);
-  const { bundles, loading } = useBundles(filters);
+  const { bundles, total, loading } = useBundles(filters);
 
   const handleSearch = (query: string) => {
-    setFilterState(prev => ({ ...prev, name: query || undefined }));
+    setFilterState(prev => ({ ...prev, name: query || undefined, page: 0 })); // Reset page on search
   };
 
   const handleFilterChange = (newFilters: BundleFilterParams) => {
-    setFilterState(newFilters);
+    setFilterState({ ...newFilters, page: 0 }); // Reset page on filter change
   };
 
   const handleClearFilters = () => {
@@ -169,11 +178,32 @@ function BundlesContent() {
                 ))}
               </div>
             ) : bundles.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {bundles.map((bundle) => (
-                  <PublicBundleCard key={bundle.id} bundle={bundle} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+                  {bundles.map((bundle) => (
+                    <PublicBundleCard key={bundle.id} bundle={bundle} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                <div className="flex justify-center">
+                  <Pagination
+                    current={(filterState.page || 0) + 1}
+                    pageSize={filterState.size || 20}
+                    total={total}
+                    onChange={(page, size) => {
+                      setFilterState(prev => ({
+                        ...prev,
+                        page: page - 1,
+                        size: size
+                      }));
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    showSizeChanger
+                    pageSizeOptions={['12', '24', '48']}
+                  />
+                </div>
+              </>
             ) : (
               <div className="text-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm">
                 <div className="text-6xl mb-4">🔍</div>

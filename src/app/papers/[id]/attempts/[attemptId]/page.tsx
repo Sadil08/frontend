@@ -24,11 +24,11 @@ export default function AttemptDetailsPage() {
                 <div className="max-w-7xl mx-auto p-6">
                     <Button
                         icon={<ArrowLeftOutlined />}
-                        onClick={() => router.push(`/papers/${paperId}`)}
+                        onClick={() => router.push(`/papers/${paperId}/past-attempts`)}
                         className="mb-4"
                         size="large"
                     >
-                        Back to Paper
+                        Back to Past Attempts
                     </Button>
 
                     <AttemptResults attemptId={attemptId} />

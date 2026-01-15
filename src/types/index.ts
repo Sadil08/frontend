@@ -107,11 +107,13 @@ export interface QuestionAttemptDto {
   answerTypeHint?: 'short' | 'essay' | 'diagram';
   marks: number;
   options: OptionAttemptDto[];
+  extractionsUsed?: number; // NEW: Number of extractions used for this question in current attempt
 }
 
 /** Paper attempt response with questions */
 export interface PaperAttemptDto {
   id: number;
+  attemptId?: number; // NEW: For extraction tracking
   bundleId: number;
   name: string;
   description: string;

@@ -7,6 +7,8 @@ import EssayQuestion from './EssayQuestion';
 import { Modal } from 'antd';
 import { useAuth } from '@/context/AuthContext';
 import * as paperStorage from '@/utils/paperAttemptStorage';
+import { useAutosave } from '@/hooks/useAutosave';
+import { saveDraftAnswers, loadDraftAnswers } from '@/services/answerService';
 
 /**
  * Props for FullPaper component
@@ -30,6 +32,7 @@ interface FullPaperProps {
  * - Confirmation modal before submission
  * - Scroll-to-top button
  * - Submit button at bottom
+ * - Database-backed autosave every 30 seconds
  */
 export const FullPaper: React.FC<FullPaperProps> = ({
     paperData,
@@ -41,26 +44,78 @@ export const FullPaper: React.FC<FullPaperProps> = ({
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
 
-    // Load saved answers from localStorage on mount
-    useEffect(() => {
-        if (!paperData || !user) return;
+    // Auto-save answers to database every 30 seconds
+    useAutosave(
+        async () => {
+            if (!paperData?.attemptId || answers.size === 0) return;
 
-        const savedAnswers = paperStorage.loadPaperAttempt(paperData.id, user.id);
-        if (savedAnswers && savedAnswers.size > 0) {
-            // Convert StoredAnswer to AnswerSubmissionDto
-            const converted = new Map<number, AnswerSubmissionDto>();
-            savedAnswers.forEach((stored, questionId) => {
-                converted.set(questionId, {
-                    questionId: stored.questionId,
-                    answerText: stored.answerText,
-                    imageUrl: stored.imageUrl,
-                    extractedText: stored.extractedText,
-                    selectedOptionId: stored.selectedOptionId
-                });
+            const answersArray = Array.from(answers.values());
+            await saveDraftAnswers(paperData.attemptId, answersArray);
+        },
+        answers,
+        { interval: 30000, enabled: !isSubmitting }
+    );
+
+    // Load saved answers from database (primary) or localStorage (fallback) on mount
+    useEffect(() => {
+        if (!paperData || !user || !paperData.attemptId) return;
+
+        // Try loading from database first
+        loadDraftAnswers(paperData.attemptId)
+            .then(draftAnswers => {
+                if (draftAnswers && draftAnswers.length > 0) {
+                    const converted = new Map<number, AnswerSubmissionDto>();
+                    draftAnswers.forEach(draft => {
+                        converted.set(draft.questionId, {
+                            questionId: draft.questionId,
+                            answerText: draft.answerText,
+                            imageUrl: draft.imageUrl,
+                            extractedText: draft.extractedText,
+                            selectedOptionId: draft.selectedOptionId
+                        });
+                    });
+                    setAnswers(converted);
+                    console.log(`✅ Restored ${converted.size} answers from database`);
+                    return;
+                }
+
+                // Fallback to localStorage if no database drafts
+                const savedAnswers = paperStorage.loadPaperAttempt(paperData.id, user.id);
+                if (savedAnswers && savedAnswers.size > 0) {
+                    const converted = new Map<number, AnswerSubmissionDto>();
+                    savedAnswers.forEach((stored, questionId) => {
+                        converted.set(questionId, {
+                            questionId: stored.questionId,
+                            answerText: stored.answerText,
+                            imageUrl: stored.imageUrl,
+                            extractedText: stored.extractedText,
+                            selectedOptionId: stored.selectedOptionId
+                        });
+                    });
+                    setAnswers(converted);
+                    console.log(`✅ Restored ${converted.size} answers from localStorage`);
+                }
+            })
+            .catch(error => {
+                console.warn('Failed to load drafts from database, trying localStorage:', error);
+
+                // Fallback to localStorage on error
+                const savedAnswers = paperStorage.loadPaperAttempt(paperData.id, user.id);
+                if (savedAnswers && savedAnswers.size > 0) {
+                    const converted = new Map<number, AnswerSubmissionDto>();
+                    savedAnswers.forEach((stored, questionId) => {
+                        converted.set(questionId, {
+                            questionId: stored.questionId,
+                            answerText: stored.answerText,
+                            imageUrl: stored.imageUrl,
+                            extractedText: stored.extractedText,
+                            selectedOptionId: stored.selectedOptionId
+                        });
+                    });
+                    setAnswers(converted);
+                    console.log(`✅ Restored ${converted.size} answers from localStorage (fallback)`);
+                }
             });
-            setAnswers(converted);
-            console.log(`[FullPaper] Restored ${converted.size} answers from localStorage`);
-        }
     }, [paperData, user]);
 
     // Handle scroll to show/hide scroll-to-top button
@@ -121,6 +176,23 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                 imageUrl: updated.imageUrl,
                 extractedText: updated.extractedText
             });
+
+            // IMMEDIATE CLOUD SAVE for image uploads/extractions
+            // This ensures "on the go" saving as requested by user
+            if ((imageUrl || extractedText) && paperData.attemptId) {
+                // We construct a specific DTO for this single answer to save immediately
+                const answersToSave = [{
+                    questionId,
+                    answerText: updated.answerText,
+                    imageUrl: updated.imageUrl,
+                    extractedText: updated.extractedText,
+                    selectedOptionId: undefined
+                }];
+                // Call the service directly (fire and forget, but log error)
+                saveDraftAnswers(paperData.attemptId, answersToSave)
+                    .then(() => console.log(`☁️ Immediately saved answer for Q${questionId}`))
+                    .catch(err => console.error('Failed to auto-save answer:', err));
+            }
         }
     };
 
@@ -243,6 +315,7 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                                 imageUrl={answers.get(question.id)?.imageUrl || ''}
                                 extractedText={answers.get(question.id)?.extractedText || ''}
                                 paperId={paperData.id}
+                                attemptId={paperData.attemptId}  // NEW: Pass attemptId for extraction tracking
                                 onAnswerChange={handleEssayAnswer}
                             />
                         )}

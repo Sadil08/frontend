@@ -6,6 +6,7 @@ import { Card, Button, Spin, message, Typography, Empty } from 'antd';
 import { ArrowLeftOutlined, ClockCircleOutlined, TrophyOutlined, EyeOutlined } from '@ant-design/icons';
 import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { AttemptStatusBanner } from '@/components/AttemptStatusBanner';
 import { paperService } from '@/services/paperService';
 import { AttemptHistoryItem } from '@/types';
 
@@ -339,6 +340,21 @@ export default function PastAttemptsPage() {
                                                     </div>
                                                 </div>
                                             </div>
+
+                                            {/* Retry Analysis Banner - Show if analysis failed/incomplete */}
+                                            {(!attempt.analysisCompleted || attempt.analysisError) && attempt.status === 'SUBMITTED' && (
+                                                <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                                                    <AttemptStatusBanner
+                                                        attempt={{
+                                                            id: attempt.id,
+                                                            analysisCompleted: attempt.analysisCompleted,
+                                                            analysisError: attempt.analysisError || undefined,
+                                                            submissionCount: attempt.submissionCount || 1,
+                                                        }}
+                                                        onRetrySuccess={fetchAttempts}
+                                                    />
+                                                </div>
+                                            )}
 
                                             {/* View Details Button */}
                                             <div className="mt-4 pt-4 border-t border-gray-100">

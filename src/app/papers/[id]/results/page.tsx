@@ -13,6 +13,8 @@ import { AttemptDetails } from '@/types';
 import { LeaderboardEntry } from '@/types/leaderboardTypes';
 import { message, Modal } from 'antd';
 
+import { AttemptStatusBanner } from '@/components/AttemptStatusBanner';
+
 function ResultsContent() {
     const params = useParams();
     const router = useRouter();
@@ -115,11 +117,11 @@ function ResultsContent() {
 
                 <div className="page-content max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <nav className="flex items-center gap-2 text-sm text-secondary-500 mb-8 animate-slide-up">
-                        <button onClick={() => router.push('/dashboard')} className="hover:text-primary-600 transition-colors flex items-center gap-1">
+                        <button onClick={() => router.push(`/papers/${params.id}/past-attempts`)} className="hover:text-primary-600 transition-colors flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                             </svg>
-                            Dashboard
+                            Past Attempts
                         </button>
                         <span className="text-gray-300">/</span>
                         <span className="text-secondary-900 font-medium">Results</span>
@@ -141,14 +143,24 @@ function ResultsContent() {
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 mb-3">Failed to Load Results</h3>
                             <p className="text-gray-600 mb-8 text-lg">{error}</p>
-                            <button onClick={() => router.push('/dashboard')} className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-md">
-                                Back to Dashboard
+                            <button onClick={() => router.push(`/papers/${params.id}/past-attempts`)} className="px-6 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-md">
+                                Back to Attempt History
                             </button>
                         </div>
                     )}
 
                     {!loading && !error && attempt && (
                         <>
+                            {/* Analysis Retry Banner */}
+                            <AttemptStatusBanner
+                                attempt={{
+                                    id: attempt.id,
+                                    analysisCompleted: attempt.analysisCompleted,
+                                    analysisError: attempt.analysisError || undefined, // Convert null to undefined
+                                    submissionCount: attempt.submissionCount || 1, // Default to 1 if not present
+                                }}
+                                onRetrySuccess={fetchResults}
+                            />
                             <div className={`rounded-2xl p-8 mb-10 animate-slide-up shadow-card border ${performancePercentage >= 80 ? 'bg-gradient-to-br from-green-50 to-white border-green-200' :
                                 performancePercentage >= 60 ? 'bg-gradient-to-br from-blue-50 to-white border-blue-200' :
                                     performancePercentage >= 40 ? 'bg-gradient-to-br from-amber-50 to-white border-amber-200' :
@@ -189,10 +201,37 @@ function ResultsContent() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-center py-12 bg-white/50 rounded-xl border border-gray-100 mb-8">
+                                    <div className="text-center py-12 bg-white/50 rounded-xl border border-gray-100 mb-8 animate-pulse">
                                         <div className="spinner w-12 h-12 mx-auto mb-4 text-primary-600" />
                                         <h3 className="text-xl font-bold text-secondary-900 mb-2">Analyzing Results</h3>
-                                        <p className="text-secondary-600">AI is grading your answers and generating feedback...</p>
+                                        <p className="text-secondary-600 max-w-md mx-auto mb-6">
+                                            AI is grading your answers and generating feedback. This usually takes about 30-60 seconds.
+                                            <br /><br />
+                                            <strong>☕ Feel free to grab a coffee!</strong>
+                                            <br />
+                                            Your results will be saved automatically. You can check back later in "Past Attempts".
+                                        </p>
+
+                                        {/* Manual Retry Trigger for Stuck Attempts */}
+                                        <div className="mt-4 pt-4 border-t border-gray-200/50">
+                                            <p className="text-sm text-gray-500 mb-3">Taking longer than expected?</p>
+                                            <button
+                                                onClick={() => {
+                                                    // Force a retry call
+                                                    if (attempt?.id) {
+                                                        paperService.retryAnalysis(attempt.id)
+                                                            .then(() => {
+                                                                message.success('Analysis retried!');
+                                                                fetchResults();
+                                                            })
+                                                            .catch(() => message.error('Could not retry yet'));
+                                                    }
+                                                }}
+                                                className="text-primary-600 hover:text-primary-700 text-sm font-medium underline"
+                                            >
+                                                Click here to retry manually
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
@@ -234,10 +273,10 @@ function ResultsContent() {
                                             Retry Paper
                                         </button>
                                         <button
-                                            onClick={() => router.push('/dashboard')}
+                                            onClick={() => router.push(`/papers/${params.id}/past-attempts`)}
                                             className="px-6 py-3 bg-white text-secondary-600 border border-gray-200 rounded-xl font-semibold hover:bg-gray-50 hover:text-secondary-900 transition-colors shadow-sm"
                                         >
-                                            Back to Dashboard
+                                            Back to Past Attempts
                                         </button>
                                     </div>
                                 )}

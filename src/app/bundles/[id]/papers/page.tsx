@@ -18,6 +18,7 @@ export default function BundlePapers() {
     const [bundle, setBundle] = useState<PaperBundleDetailDto | null>(null);
     const [attemptedPapers, setAttemptedPapers] = useState<Set<number>>(new Set());
     const [attemptInfo, setAttemptInfo] = useState<Record<number, { remainingAttempts: number; maxAttempts: number }>>({});
+    const [inProgressAttempts, setInProgressAttempts] = useState<Record<number, number>>({}); // paperId -> attemptId
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -28,13 +29,21 @@ export default function BundlePapers() {
                 const papersData = bundleData.papers || [];
                 setPapers(papersData);
 
-                // Check which papers have been attempted
+                // Check which papers have been attempted AND check for in-progress attempts
                 const attempted = new Set<number>();
+                const inProgress: Record<number, number> = {};
+
                 for (const paper of papersData) {
                     try {
                         const attempts = await paperService.getAttemptHistory(paper.id);
                         if (attempts.length > 0) {
                             attempted.add(paper.id);
+
+                            // Check if latest attempt is IN_PROGRESS
+                            const latestAttempt = attempts[0];
+                            if (latestAttempt.status === 'IN_PROGRESS') {
+                                inProgress[paper.id] = latestAttempt.id;
+                            }
                         }
                     } catch (err) {
                         // If we can't check attempts, assume not attempted
@@ -42,6 +51,7 @@ export default function BundlePapers() {
                     }
                 }
                 setAttemptedPapers(attempted);
+                setInProgressAttempts(inProgress);
 
                 // Fetch attempt info for all papers
                 if (papersData.length > 0) {
@@ -112,6 +122,7 @@ export default function BundlePapers() {
                             attemptsRemaining={attemptInfo[paper.id]?.remainingAttempts ?? paper.maxFreeAttempts}
                             maxAttempts={attemptInfo[paper.id]?.maxAttempts}
                             hasAttempted={attemptedPapers.has(paper.id)}
+                            inProgressAttemptId={inProgressAttempts[paper.id]}
                         />
                     ))}
                 </div>
