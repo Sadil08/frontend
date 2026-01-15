@@ -35,6 +35,7 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
     const [allLessons, setAllLessons] = useState<LessonDto[]>([]);
     const [examTypes, setExamTypes] = useState<ExamType[]>([]);
     const [filteredLessons, setFilteredLessons] = useState<LessonDto[]>([]);
+    const [localPrice, setLocalPrice] = useState<[number | undefined, number | undefined]>([undefined, undefined]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -62,6 +63,11 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
             setFilteredLessons([]);
         }
     }, [filters.subjectId, allLessons]);
+
+    // Sync local price with filters when they change externally
+    useEffect(() => {
+        setLocalPrice([filters.minPrice, filters.maxPrice]);
+    }, [filters.minPrice, filters.maxPrice]);
 
     const handleFilterChange = (key: keyof BundleFilterParams, value: any) => {
         onFilterChange({ ...filters, [key]: value });
@@ -179,10 +185,19 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                     min={0}
                     max={200}
                     step={5}
-                    value={[filters.minPrice || 0, filters.maxPrice || 200]}
+                    value={[
+                        localPrice[0] ?? filters.minPrice ?? 0,
+                        localPrice[1] ?? filters.maxPrice ?? 200
+                    ]}
                     onChange={(value) => {
-                        handleFilterChange('minPrice', value[0] === 0 ? undefined : value[0]);
-                        handleFilterChange('maxPrice', value[1] === 200 ? undefined : value[1]);
+                        setLocalPrice([value[0], value[1]]);
+                    }}
+                    onAfterChange={(value) => {
+                        onFilterChange({
+                            ...filters,
+                            minPrice: value[0] === 0 ? undefined : value[0],
+                            maxPrice: value[1] === 200 ? undefined : value[1]
+                        });
                     }}
                     marks={{
                         0: '$0',
@@ -194,8 +209,8 @@ export const BundleFilters: React.FC<BundleFiltersProps> = ({
                     className="mb-8"
                 />
                 <div className="flex justify-between text-sm text-gray-600">
-                    <span>${filters.minPrice || 0}</span>
-                    <span>${filters.maxPrice || 200}</span>
+                    <span>${localPrice[0] ?? filters.minPrice ?? 0}</span>
+                    <span>${localPrice[1] ?? filters.maxPrice ?? 200}</span>
                 </div>
             </div>
 

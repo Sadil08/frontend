@@ -14,12 +14,25 @@ export default function UserListPage() {
     const router = useRouter();
     const [users, setUsers] = useState<AdminUserDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0
+    });
+    const [searchText, setSearchText] = useState('');
 
-    const fetchUsers = async (search?: string) => {
+    const fetchUsers = async (page = 1, size = 10, search = searchText) => {
         setLoading(true);
         try {
-            const data = await adminService.getUsers(search);
-            setUsers(data);
+            // Backend uses 0-indexed pages
+            const data = await adminService.getUsers(search, page - 1, size);
+            setUsers(data.content);
+            setPagination(prev => ({
+                ...prev,
+                current: page,
+                pageSize: size,
+                total: data.totalElements
+            }));
         } catch (error) {
             console.error('Failed to load users:', error);
             message.error('Failed to load users');
@@ -32,7 +45,16 @@ export default function UserListPage() {
         fetchUsers();
     }, []);
 
-    const onSearch = (value: string) => fetchUsers(value);
+    const onSearch = (value: string) => {
+        setSearchText(value);
+        fetchUsers(1, pagination.pageSize, value);
+    };
+
+    const handleTableChange = (pagination: any) => {
+        fetchUsers(pagination.current, pagination.pageSize, searchText);
+    };
+
+
 
     const columns = [
         {
@@ -115,6 +137,11 @@ export default function UserListPage() {
                         columns={columns}
                         loading={loading}
                         onView={(record) => router.push(`/admin/users/${record.id}`)}
+                        pagination={{
+                            ...pagination,
+                            showSizeChanger: true,
+                            onChange: (page: number, pageSize: number) => fetchUsers(page, pageSize, searchText)
+                        }}
                     />
                 </div>
             </div>

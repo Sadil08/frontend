@@ -18,22 +18,19 @@ function BundlesContent() {
   const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(false);
 
-  // Initialize filters from URL parameters
-  const [filterState, setFilterState] = useState<BundleFilterParams>(() => {
+  // Parse filters from URL
+  const filters: BundleFilterParams = useMemo(() => {
     const params: BundleFilterParams = {};
-
     const page = searchParams.get('page');
     if (page) params.page = parseInt(page);
     else params.page = 0;
 
     const size = searchParams.get('size');
     if (size) params.size = parseInt(size);
-    else params.size = 12; // Default page size for frontend
+    else params.size = 12;
 
     const type = searchParams.get('type');
-    if (type === 'MCQ' || type === 'ESSAY' || type === 'MIXED') {
-      params.type = type;
-    }
+    if (type === 'MCQ' || type === 'ESSAY' || type === 'MIXED') params.type = type;
 
     const examTypeId = searchParams.get('examTypeId');
     if (examTypeId) params.examTypeId = parseInt(examTypeId);
@@ -57,24 +54,15 @@ function BundlesContent() {
     if (name) params.name = name;
 
     return params;
-  });
+  }, [searchParams]);
 
-  // Detect mobile screen size
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Update URL when filters change
-  useEffect(() => {
+  const updateFilters = (newFilters: Partial<BundleFilterParams>) => {
     const params = new URLSearchParams();
+    // Default page should be 0 unless specified in newFilters
+    // Merge current filters with new filters
+    const merged = { ...filters, ...newFilters };
 
-    Object.entries(filterState).forEach(([key, value]) => {
+    Object.entries(merged).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
         params.set(key, value.toString());
       }
@@ -82,33 +70,36 @@ function BundlesContent() {
 
     const queryString = params.toString();
     const newUrl = queryString ? `/bundles?${queryString}` : '/bundles';
+    router.push(newUrl, { scroll: false });
+  };
 
-    // Only update if URL actually changed
-    if (window.location.pathname + window.location.search !== newUrl) {
-      router.replace(newUrl, { scroll: false });
-    }
-  }, [filterState, router]);
-
-  // Serialize filters to prevent object recreations
-  const filtersKey = JSON.stringify(filterState);
-  const filters = useMemo(() => filterState, [filtersKey]);
   const { bundles, total, loading } = useBundles(filters);
 
   const handleSearch = (query: string) => {
-    setFilterState(prev => ({ ...prev, name: query || undefined, page: 0 })); // Reset page on search
+    updateFilters({ name: query || undefined, page: 0 });
   };
 
   const handleFilterChange = (newFilters: BundleFilterParams) => {
-    setFilterState({ ...newFilters, page: 0 }); // Reset page on filter change
+    // Ensure we reset page on filter change
+    updateFilters({ ...newFilters, page: 0 });
   };
 
   const handleClearFilters = () => {
-    setFilterState({});
+    router.push('/bundles');
   };
 
-  const activeFilterCount = Object.values(filterState).filter(
-    (value) => value !== undefined && value !== null && value !== ''
+  const activeFilterCount = Object.values(filters).filter(
+    (value) => value !== undefined && value !== null && value !== '' && typeof value !== 'function'
   ).length;
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,7 +137,7 @@ function BundlesContent() {
             )}
           </h2>
           <div className="w-full md:w-auto">
-            <SearchBar onSearch={handleSearch} />
+            <SearchBar onSearch={handleSearch} initialQuery={filters.name} />
           </div>
         </div>
 
@@ -155,7 +146,7 @@ function BundlesContent() {
           {/* Filters Sidebar (Desktop) / Drawer (Mobile) */}
           <div className="lg:col-span-1">
             <BundleFilters
-              filters={filterState}
+              filters={filters}
               onFilterChange={handleFilterChange}
               onClearFilters={handleClearFilters}
               isMobile={isMobile}
@@ -188,15 +179,14 @@ function BundlesContent() {
                 {/* Pagination */}
                 <div className="flex justify-center">
                   <Pagination
-                    current={(filterState.page || 0) + 1}
-                    pageSize={filterState.size || 20}
+                    current={(filters.page || 0) + 1}
+                    pageSize={filters.size || 20}
                     total={total}
                     onChange={(page, size) => {
-                      setFilterState(prev => ({
-                        ...prev,
+                      updateFilters({
                         page: page - 1,
                         size: size
-                      }));
+                      });
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
                     showSizeChanger

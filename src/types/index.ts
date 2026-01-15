@@ -22,6 +22,19 @@ export interface UserResponse {
   role: 'STUDENT' | 'ADMIN';
 }
 
+/** Generic Spring Data Page */
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
 /** Exam Type entity */
 export interface ExamType {
   id: number;

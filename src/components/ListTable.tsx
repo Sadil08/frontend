@@ -11,6 +11,7 @@ interface ListTableProps<T> {
     onDelete?: (record: T) => void;
     onView?: (record: T) => void;
     rowKey?: string;
+    pagination?: any;
 }
 
 export function ListTable<T extends { id: number | string }>({
@@ -20,7 +21,8 @@ export function ListTable<T extends { id: number | string }>({
     onEdit,
     onDelete,
     onView,
-    rowKey = 'id'
+    rowKey = 'id',
+    pagination
 }: ListTableProps<T>) {
 
     const actionColumn: ColumnsType<T>[0] = {
@@ -68,7 +70,7 @@ export function ListTable<T extends { id: number | string }>({
                 columns={tableColumns}
                 rowKey={rowKey}
                 loading={loading}
-                pagination={{
+                pagination={pagination || {
                     pageSize: 10,
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} items`,

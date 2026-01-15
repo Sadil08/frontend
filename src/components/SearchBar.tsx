@@ -1,20 +1,32 @@
 import { Input } from 'antd';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { SearchOutlined } from '@ant-design/icons';
 
 interface SearchBarProps {
   onSearch: (query: string) => void;
+  initialQuery?: string;
 }
 
-const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
-  const [query, setQuery] = useState('');
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch, initialQuery = '' }) => {
+  const [query, setQuery] = useState(initialQuery);
+  const onSearchRef = useRef(onSearch);
+
+  // Keep ref updated
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  // Sync with initialQuery if it changes externally (optional, but good for URL sync)
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      onSearch(query);
+      onSearchRef.current(query);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [query, onSearch]);
+  }, [query]);
 
   return (
     <Input

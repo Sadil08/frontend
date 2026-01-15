@@ -12,17 +12,33 @@ import { WalletTransaction } from "@/types/wallet";
 export default function WalletPage() {
     const [balance, setBalance] = useState<number | null>(null);
     const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+    const [pagination, setPagination] = useState({
+        current: 1,
+        pageSize: 10,
+        total: 0
+    });
     const [loading, setLoading] = useState(true);
     const [isTopUpOpen, setIsTopUpOpen] = useState(false);
 
-    const fetchData = async () => {
+    const fetchData = async (page = 1, size = 10) => {
         try {
-            const [balanceData, transactionsData] = await Promise.all([
-                walletService.getBalance(),
-                walletService.getTransactions()
-            ]);
-            setBalance(balanceData);
-            setTransactions(transactionsData);
+            // Fetch balance only on initial load or if needed
+            if (balance === null) {
+                const bal = await walletService.getBalance();
+                setBalance(bal);
+            }
+
+            // Backend pages are 0-indexed
+            const txData = await walletService.getTransactions(page - 1, size);
+
+            // txData is a Page object now
+            setTransactions(txData.content);
+            setPagination(prev => ({
+                ...prev,
+                current: page,
+                pageSize: size,
+                total: txData.totalElements
+            }));
         } catch (err) {
             console.error("Failed to fetch wallet data", err);
         } finally {
@@ -48,12 +64,18 @@ export default function WalletPage() {
                 <ReferralSection />
             </div>
 
-            <TransactionHistory transactions={transactions} />
+            <TransactionHistory
+                transactions={transactions}
+                pagination={{
+                    ...pagination,
+                    onChange: (page, size) => fetchData(page, size)
+                }}
+            />
 
             <TopUpModal
                 isOpen={isTopUpOpen}
                 onClose={() => setIsTopUpOpen(false)}
-                onSuccess={fetchData}
+                onSuccess={() => fetchData(pagination.current, pagination.pageSize)}
             />
         </div>
     );
