@@ -26,6 +26,8 @@ export default function PaperAttemptPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const paperId = parseInt(params.id as string);
+    const bundleId = searchParams.get('bundleId') ? parseInt(searchParams.get('bundleId') as string) : null;
+    const customBundleId = searchParams.get('customBundleId') ? parseInt(searchParams.get('customBundleId') as string) : null;
     const forceNew = searchParams.get('forceNew') === 'true';
 
     const [paperData, setPaperData] = useState<PaperAttemptDto | null>(null);
@@ -35,20 +37,30 @@ export default function PaperAttemptPage() {
     const [error, setError] = useState<string | null>(null);
     const [showPurchaseModal, setShowPurchaseModal] = useState(false);
 
-    // Prevent duplicate API calls - track if we've already fetched this attempt
-    const attemptFetchedRef = React.useRef(false);
+    // Prevent duplicate API calls - track the request key we've fetched
+    const lastFetchKeyRef = React.useRef<string | null>(null);
 
     /**
      * Fetch paper attempt data
      */
     const fetchPaperAttempt = useCallback(async () => {
-        // Prevent duplicate calls (React StrictMode calls useEffect twice in dev)
-        if (attemptFetchedRef.current) {
-            console.log('[PaperAttempt] Skipping duplicate fetch');
+        // Create a unique key for this request to prevent duplicates
+        const fetchKey = `${paperId}-${bundleId}-${customBundleId}-${forceNew}`;
+
+        // Prevent duplicate calls for the same parameters
+        if (lastFetchKeyRef.current === fetchKey) {
+            console.log('[PaperAttempt] Skipping duplicate fetch for:', fetchKey);
             return;
         }
 
-        attemptFetchedRef.current = true;
+        if (!bundleId && !customBundleId) {
+            setError('Missing Bundle context');
+            message.error('Invalid access: Bundle ID missing');
+            return;
+        }
+
+        // Mark this request as in-progress
+        lastFetchKeyRef.current = fetchKey;
 
         try {
             setLoading(true);
@@ -56,7 +68,8 @@ export default function PaperAttemptPage() {
             setStartTime(Date.now());
 
             // Pass forceNew to API - creates fresh attempt when retrying
-            const data = await paperService.attemptPaper(paperId, forceNew);
+            // Pass bundleId OR customBundleId
+            const data = await paperService.attemptPaper(paperId, bundleId || undefined, customBundleId || undefined, forceNew);
             setPaperData(data);
 
             // IMPORTANT: If this is a fresh retry (forceNew=true), clear localStorage
@@ -72,9 +85,10 @@ export default function PaperAttemptPage() {
                 // Remove forceNew from URL to prevent accidentally creating another attempt on reload
                 const newParams = new URLSearchParams(searchParams.toString());
                 newParams.delete('forceNew');
+                // Keep bundleId in the URL
                 const newPath = newParams.toString()
                     ? `/papers/${paperId}/attempt?${newParams.toString()}`
-                    : `/papers/${paperId}/attempt`;
+                    : `/papers/${paperId}/attempt?bundleId=${bundleId}`;
 
                 router.replace(newPath, { scroll: false });
             }
@@ -82,6 +96,8 @@ export default function PaperAttemptPage() {
             console.error('Error fetching paper attempt:', err);
             setError(err.response?.data?.message || 'Failed to load paper');
             message.error('Failed to load paper for attempt');
+            // Reset the fetch key on error to allow retry
+            lastFetchKeyRef.current = null;
 
             // Redirect to dashboard after error
             setTimeout(() => {
@@ -90,24 +106,27 @@ export default function PaperAttemptPage() {
         } finally {
             setLoading(false);
         }
-    }, [paperId, router, forceNew]);
+    }, [paperId, bundleId, customBundleId, forceNew, router, searchParams]);
 
-    // Reset the fetch guard when paperId or forceNew changes
+    // Single useEffect to trigger fetch when we have valid parameters
     useEffect(() => {
-        attemptFetchedRef.current = false;
-    }, [paperId, forceNew]);
-
-    useEffect(() => {
-        if (paperId) {
+        if (paperId && (bundleId || customBundleId)) {
             fetchPaperAttempt();
+        } else if (!bundleId && !customBundleId) {
+            setError('This paper must be accessed through a bundle.');
+            setLoading(false);
         }
-    }, [paperId, fetchPaperAttempt]);
+    }, [paperId, bundleId, customBundleId, fetchPaperAttempt]);
 
     /**
      * Handle paper submission
      */
     const handleSubmit = async (answers: AnswerSubmissionDto[]) => {
         try {
+            if (!bundleId && !customBundleId) {
+                message.error('Missing bundle context');
+                return;
+            }
             setSubmitting(true);
 
             // Calculate time taken in minutes
@@ -120,7 +139,7 @@ export default function PaperAttemptPage() {
             };
 
             // Submit paper
-            const result = await paperService.submitPaper(paperId, submission);
+            const result = await paperService.submitPaper(paperId, submission, bundleId || undefined, customBundleId || undefined);
 
             message.success('Paper submitted successfully! Redirecting to results...');
 
@@ -186,7 +205,7 @@ export default function PaperAttemptPage() {
                                 <div className="text-right">
                                     <div className="text-3xl font-bold text-blue-600">{paperData.remainingAttempts || 0}</div>
                                     <div className="text-sm text-gray-500">Remaining</div>
-                                    {paperData.canAttempt !== false && (
+                                    {paperData.canAttempt !== false && !customBundleId && (
                                         <button
                                             onClick={() => setShowPurchaseModal(true)}
                                             className="mt-2 text-xs text-primary-600 hover:text-primary-700 font-medium underline"
@@ -196,7 +215,7 @@ export default function PaperAttemptPage() {
                                     )}
                                 </div>
                             </div>
-                            {paperData.canAttempt === false && (
+                            {paperData.canAttempt === false && !paperData.attemptId && (
                                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                                     <div className="flex items-start gap-3">
                                         <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,15 +227,17 @@ export default function PaperAttemptPage() {
                                                 You have exhausted all {paperData.maxAttempts} attempts for this paper.
                                             </p>
                                             <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => setShowPurchaseModal(true)}
-                                                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                                    </svg>
-                                                    Purchase Extra Attempts
-                                                </button>
+                                                {!customBundleId && (
+                                                    <button
+                                                        onClick={() => setShowPurchaseModal(true)}
+                                                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                        </svg>
+                                                        Purchase Extra Attempts
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => router.push('/dashboard')}
                                                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
@@ -278,6 +299,7 @@ export default function PaperAttemptPage() {
                     visible={showPurchaseModal}
                     onClose={() => setShowPurchaseModal(false)}
                     paperId={paperId}
+                    bundleId={bundleId || 0}
                     onPurchaseSuccess={handlePurchaseSuccess}
                 />
             </div>

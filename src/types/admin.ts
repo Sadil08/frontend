@@ -71,7 +71,7 @@ export interface AdminPaperDto {
     name: string;
     description: string;
     type: 'MCQ' | 'ESSAY' | 'MIXED';
-    bundleId: number | null;
+    bundleIds: number[]; // Changed from bundleId
     subjectId?: number | null;
     subjectName?: string | null;
     maxFreeAttempts: number;
@@ -119,7 +119,7 @@ export interface PaperCreateDto {
     maxFreeAttempts: number;
     /** Total marks for the paper (used for weighted scoring) */
     totalMarks?: number;
-    bundleId?: number;
+    bundleIds?: number[];
     subjectId?: number;
 }
 

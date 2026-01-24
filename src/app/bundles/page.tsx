@@ -12,14 +12,19 @@ import { useBundles } from '@/hooks/useBundles';
 import { useAuth } from '@/context/AuthContext';
 import { BundleFilterParams } from '@/services/bundleService';
 
+import { PublicCustomBundleCard } from '@/components/PublicCustomBundleCard';
+import { customBundleService, CustomBundleDto } from '@/services/customBundleService';
+
 function BundlesContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(false);
+  const [communityBundles, setCommunityBundles] = useState<CustomBundleDto[]>([]);
 
   // Parse filters from URL
   const filters: BundleFilterParams = useMemo(() => {
+    // ... existing filter logic ... 
     const params: BundleFilterParams = {};
     const page = searchParams.get('page');
     if (page) params.page = parseInt(page);
@@ -55,6 +60,19 @@ function BundlesContent() {
 
     return params;
   }, [searchParams]);
+
+  useEffect(() => {
+    // Fetch community bundles
+    const fetchCommunityBundles = async () => {
+      try {
+        const data = await customBundleService.getPublicBundles();
+        setCommunityBundles(data);
+      } catch (err) {
+        console.error('Failed to load community bundles', err);
+      }
+    };
+    fetchCommunityBundles();
+  }, []);
 
   const updateFilters = (newFilters: Partial<BundleFilterParams>) => {
     const params = new URLSearchParams();
@@ -128,14 +146,27 @@ function BundlesContent() {
       <div id="bundles" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         {/* Header with Search */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-          <h2 className="text-3xl font-bold text-secondary-900">
-            Featured Bundles
-            {activeFilterCount > 0 && (
-              <span className="ml-3 text-lg font-normal text-gray-500">
-                ({bundles.length} result{bundles.length !== 1 ? 's' : ''})
-              </span>
+          <div className="flex items-center gap-4">
+            <h2 className="text-3xl font-bold text-secondary-900">
+              Featured Bundles
+              {activeFilterCount > 0 && (
+                <span className="ml-3 text-lg font-normal text-gray-500">
+                  ({bundles.length} result{bundles.length !== 1 ? 's' : ''})
+                </span>
+              )}
+            </h2>
+            {user && (
+              <button
+                onClick={() => router.push('/bundles/create-custom')}
+                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold text-sm hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Create Custom Bundle
+              </button>
             )}
-          </h2>
+          </div>
           <div className="w-full md:w-auto">
             <SearchBar onSearch={handleSearch} initialQuery={filters.name} />
           </div>
@@ -155,6 +186,25 @@ function BundlesContent() {
 
           {/* Results Grid */}
           <div className="lg:col-span-3">
+            {/* Community Bundles Section */}
+            {communityBundles.length > 0 && (
+              <div className="mb-10">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-1.5 h-6 bg-purple-600 rounded-full"></span>
+                  <h3 className="text-xl font-bold text-gray-900">Community Bundles</h3>
+                  <span className="text-xs font-semibold px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
+                    Student Created
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {communityBundles.map(bundle => (
+                    <PublicCustomBundleCard key={bundle.id} bundle={bundle} />
+                  ))}
+                </div>
+                <div className="my-8 border-t border-gray-200"></div>
+              </div>
+            )}
+
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (

@@ -11,6 +11,7 @@ export interface AttemptHistoryItem {
     id: number;
     attemptNumber: number;
     status: string;
+    startedAt: string;
     completedAt: string;
     timeTakenMinutes: number;
     /** Final weighted score (scaled based on paper's totalMarks) */
@@ -58,6 +59,8 @@ export interface AttemptDetails {
     id: number;
     studentId: number;
     paperId: number;
+    originBundleId: number; // Context bundle ID
+    originCustomBundleId?: number; // Context custom bundle ID (optional)
     attemptNumber: number;
     status: string;
     startedAt: string;
@@ -82,6 +85,7 @@ export interface AttemptHistoryProps {
     attempts: AttemptHistoryItem[];
     paperId: number;
     loading?: boolean;
+    bundleId?: number;
     onAttemptSelect?: (attemptId: number) => void;
 }
 
@@ -100,4 +104,15 @@ export interface AttemptQuestionCardProps {
     answer: AttemptAnswer;
     questionNumber: number;
     showFeedback?: boolean;
+}
+
+/**
+ * Basic attempt capability info for a paper
+ */
+export interface AttemptInfo {
+    attemptsMade: number;
+    maxAttempts: number;
+    remainingAttempts: number;
+    canAttempt?: boolean;
+    inProgressAttemptId?: number;
 }

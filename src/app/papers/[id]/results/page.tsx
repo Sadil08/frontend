@@ -264,7 +264,15 @@ function ResultsContent() {
                                             )}
                                         </button>
                                         <button
-                                            onClick={() => router.push(`/papers/${params.id}/attempt`)}
+                                            onClick={() => {
+                                                const urlParams = new URLSearchParams();
+                                                if (attempt.originCustomBundleId) {
+                                                    urlParams.append('customBundleId', attempt.originCustomBundleId.toString());
+                                                } else if (attempt.originBundleId) {
+                                                    urlParams.append('bundleId', attempt.originBundleId.toString());
+                                                }
+                                                router.push(`/papers/${params.id}/attempt?${urlParams.toString()}`);
+                                            }}
                                             className="px-6 py-3 bg-primary-600 text-white rounded-xl font-semibold hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
                                         >
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

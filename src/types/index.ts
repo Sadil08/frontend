@@ -86,11 +86,12 @@ export interface PaperBundleDetailDto {
 }
 
 /** Paper information */
+/** Paper information */
 export interface PaperDto {
   id: number;
   name: string;
   description: string;
-  bundleId: number;
+  bundleIds: number[]; // Changed from bundleId to bundleIds
   type: 'MCQ' | 'ESSAY' | 'MIXED';
   maxFreeAttempts: number;
   /** Total marks for the paper (used for weighted scoring) */
@@ -127,7 +128,8 @@ export interface QuestionAttemptDto {
 export interface PaperAttemptDto {
   id: number;
   attemptId?: number; // NEW: For extraction tracking
-  bundleId: number;
+  bundleIds: number[]; // Changed from bundleId
+  originBundleId: number; // NEW: Context of the attempt
   name: string;
   description: string;
   type: string;

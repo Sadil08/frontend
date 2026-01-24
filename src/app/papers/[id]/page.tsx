@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { LeaderboardTable } from '@/components/LeaderboardTable';
@@ -22,7 +22,14 @@ const { TabPane } = Tabs;
 export default function PaperDetailsPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const paperId = parseInt(params.id as string);
+    const bundleId = searchParams.get('bundleId');
+
+    // Helper to get link with bundle context
+    const getLink = (path: string) => {
+        return bundleId ? `${path}?bundleId=${bundleId}` : path;
+    };
 
     const [paper, setPaper] = useState<PaperDto | null>(null);
     const [attempts, setAttempts] = useState<AttemptHistoryItem[]>([]);
@@ -149,13 +156,13 @@ export default function PaperDetailsPage() {
 
                                 <div className="flex gap-4">
                                     <button
-                                        onClick={() => router.push(`/papers/${paperId}/attempt`)}
+                                        onClick={() => router.push(getLink(`/papers/${paperId}/attempt`))}
                                         className="btn-primary flex-1"
                                     >
                                         📝 Start New Attempt
                                     </button>
                                     <button
-                                        onClick={() => router.push(`/papers/${paperId}/past-attempts`)}
+                                        onClick={() => router.push(getLink(`/papers/${paperId}/past-attempts`))}
                                         className="btn-outline-primary px-6"
                                     >
                                         📚 View Past Attempts
@@ -212,6 +219,7 @@ export default function PaperDetailsPage() {
                                                     attempts={attempts}
                                                     paperId={paperId}
                                                     loading={loadingAttempts}
+                                                    bundleId={bundleId ? parseInt(bundleId) : undefined}
                                                 />
                                             </div>
                                         </div>

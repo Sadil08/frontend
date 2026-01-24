@@ -9,6 +9,7 @@ interface ExtraAttemptsModalProps {
     visible: boolean;
     onClose: () => void;
     paperId: number;
+    bundleId: number;
     onPurchaseSuccess: () => void;
 }
 
@@ -16,6 +17,7 @@ export const ExtraAttemptsModal: React.FC<ExtraAttemptsModalProps> = ({
     visible,
     onClose,
     paperId,
+    bundleId,
     onPurchaseSuccess
 }) => {
     const [quantity, setQuantity] = useState(1);
@@ -35,7 +37,7 @@ export const ExtraAttemptsModal: React.FC<ExtraAttemptsModalProps> = ({
             }
 
             await axios.post(
-                `http://localhost:8080/api/papers/${paperId}/extra-attempts/purchase`,
+                `http://localhost:8080/api/papers/${paperId}/extra-attempts/purchase?bundleId=${bundleId}`,
                 { attemptsCount: quantity },
                 { headers: { Authorization: `Bearer ${token}` } }
             );

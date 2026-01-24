@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, Button, Spin, message, Typography, Empty } from 'antd';
 import { ArrowLeftOutlined, ClockCircleOutlined, TrophyOutlined, EyeOutlined } from '@ant-design/icons';
 import Header from '@/components/Header';
@@ -19,18 +19,41 @@ const { Title, Text } = Typography;
 export default function PastAttemptsPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const paperId = parseInt(params.id as string);
+    const bundleId = searchParams.get('bundleId');
+
+    const getLink = (path: string) => {
+        return bundleId ? `${path}?bundleId=${bundleId}` : path;
+    };
 
     const [attempts, setAttempts] = useState<AttemptHistoryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [attemptInfo, setAttemptInfo] = useState<{ canAttempt: boolean, inProgressAttemptId?: number } | null>(null);
 
     useEffect(() => {
         console.log('PastAttemptsPage - useEffect triggered, paperId:', paperId); // Debug logging
         if (paperId) {
             fetchAttempts();
+            fetchAttemptInfo();
         }
     }, [paperId]);
+
+    const fetchAttemptInfo = async () => {
+        try {
+            const infoMap = await paperService.getAttemptInfo([paperId], bundleId ? parseInt(bundleId) : undefined);
+            const info = infoMap[paperId];
+            if (info) {
+                setAttemptInfo({
+                    canAttempt: info.canAttempt ?? true,
+                    inProgressAttemptId: info.inProgressAttemptId
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching attempt info:', err);
+        }
+    };
 
     const fetchAttempts = async () => {
         try {
@@ -48,7 +71,7 @@ export default function PastAttemptsPage() {
     };
 
     const handleBackClick = () => {
-        router.push(`/papers/${paperId}`);
+        router.push(getLink(`/papers/${paperId}`));
     };
 
     const handleAttemptClick = (attemptId: number) => {
@@ -231,7 +254,7 @@ export default function PastAttemptsPage() {
                                     type="primary"
                                     size="large"
                                     icon={<TrophyOutlined />}
-                                    onClick={() => router.push(`/papers/${paperId}/attempt`)}
+                                    onClick={() => router.push(getLink(`/papers/${paperId}/attempt`))}
                                     className="mt-4"
                                 >
                                     Start Your First Attempt
@@ -294,7 +317,7 @@ export default function PastAttemptsPage() {
                                                         <div className="flex items-center gap-6 text-sm text-gray-600 mb-3">
                                                             <div className="flex items-center gap-1">
                                                                 <ClockCircleOutlined />
-                                                                {formatDate(attempt.completedAt)}
+                                                                {formatDate(attempt.completedAt || attempt.startedAt)}
                                                             </div>
                                                             <div>
                                                                 ⏱️ {attempt.timeTakenMinutes} min
@@ -378,16 +401,25 @@ export default function PastAttemptsPage() {
                         <Card className="card-base">
                             <div className="space-y-4">
                                 <Title level={4} className="text-gray-700">
-                                    Ready for another attempt?
+                                    {attemptInfo?.inProgressAttemptId
+                                        ? 'Continue your attempt'
+                                        : attemptInfo?.canAttempt === false
+                                            ? 'All attempts used'
+                                            : 'Ready for another attempt?'}
                                 </Title>
                                 <div className="space-x-4">
                                     <Button
                                         type="primary"
                                         size="large"
                                         icon={<TrophyOutlined />}
-                                        onClick={() => router.push(`/papers/${paperId}/attempt`)}
+                                        onClick={() => router.push(getLink(`/papers/${paperId}/attempt`))}
+                                        disabled={attemptInfo?.canAttempt === false && !attemptInfo?.inProgressAttemptId}
                                     >
-                                        Start New Attempt
+                                        {attemptInfo?.inProgressAttemptId
+                                            ? 'Resume Attempt'
+                                            : attemptInfo?.canAttempt === false
+                                                ? 'No Attempts Left'
+                                                : 'Start New Attempt'}
                                     </Button>
                                     <Button
                                         size="large"
