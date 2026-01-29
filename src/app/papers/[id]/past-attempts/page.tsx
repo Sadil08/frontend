@@ -8,7 +8,8 @@ import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { AttemptStatusBanner } from '@/components/AttemptStatusBanner';
 import { paperService } from '@/services/paperService';
-import { AttemptHistoryItem } from '@/types';
+import { AttemptHistoryItem, PaperDto } from '@/types';
+import YouTubeEmbed from '@/components/YouTubeEmbed';
 
 const { Title, Text } = Typography;
 
@@ -28,6 +29,7 @@ export default function PastAttemptsPage() {
     };
 
     const [attempts, setAttempts] = useState<AttemptHistoryItem[]>([]);
+    const [paper, setPaper] = useState<PaperDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [attemptInfo, setAttemptInfo] = useState<{ canAttempt: boolean, inProgressAttemptId?: number } | null>(null);
@@ -35,10 +37,20 @@ export default function PastAttemptsPage() {
     useEffect(() => {
         console.log('PastAttemptsPage - useEffect triggered, paperId:', paperId); // Debug logging
         if (paperId) {
+            fetchPaper();
             fetchAttempts();
             fetchAttemptInfo();
         }
     }, [paperId]);
+
+    const fetchPaper = async () => {
+        try {
+            const data = await paperService.getPaper(paperId);
+            setPaper(data);
+        } catch (err) {
+            console.error('Error fetching paper details:', err);
+        }
+    };
 
     const fetchAttemptInfo = async () => {
         try {
@@ -199,6 +211,16 @@ export default function PastAttemptsPage() {
                             Review your previous attempts and see how you have improved over time
                         </Text>
                     </div>
+
+                    {/* Paper Explanation Video */}
+                    {paper?.videoUrl && (
+                        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <span>🎬</span> Paper Explanation
+                            </h2>
+                            <YouTubeEmbed videoUrl={paper.videoUrl} title="Paper Explanation Video" />
+                        </div>
+                    )}
 
                     {/* Attempts Summary */}
                     {attempts.length > 0 && (

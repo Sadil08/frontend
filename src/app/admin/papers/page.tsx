@@ -58,7 +58,8 @@ export default function PaperManagementPage() {
             maxFreeAttempts: record.maxFreeAttempts,
             totalMarks: record.totalMarks,
             bundleIds: record.bundleIds,
-            subjectId: record.subjectId
+            subjectId: record.subjectId,
+            videoUrl: record.videoUrl
         });
         setIsModalOpen(true);
     };
@@ -95,7 +96,8 @@ export default function PaperManagementPage() {
                 maxFreeAttempts: values.maxFreeAttempts || 3,
                 totalMarks: values.totalMarks || undefined,
                 bundleIds: values.bundleIds || [],
-                subjectId: values.subjectId || undefined
+                subjectId: values.subjectId || undefined,
+                videoUrl: values.videoUrl || undefined
             };
 
             if (editingId) {
@@ -314,6 +316,17 @@ export default function PaperManagementPage() {
                         >
                             <Input.TextArea rows={3} placeholder="Describe the paper content..." className="rounded-lg" />
                         </Form.Item>
+                        <Form.Item
+                            name="videoUrl"
+                            label="Explained Video URL (Optional)"
+                            tooltip="Link to a YouTube video explaining this paper. Students can watch this in their attempt history."
+                            rules={[
+                                { type: 'url', message: 'Please enter a valid URL' }
+                            ]}
+                        >
+                            <Input placeholder="https://www.youtube.com/watch?v=..." />
+                        </Form.Item>
+
                         <Form.Item
                             name="type"
                             label="Type"

@@ -96,6 +96,8 @@ export interface PaperDto {
   maxFreeAttempts: number;
   /** Total marks for the paper (used for weighted scoring) */
   totalMarks?: number;
+  /** YouTube video URL for paper explanation */
+  videoUrl?: string;
 }
 
 /**
@@ -136,6 +138,8 @@ export interface PaperAttemptDto {
   maxFreeAttempts: number;
   /** Total marks for the paper (used for weighted scoring) */
   totalMarks?: number;
+  /** YouTube video URL for paper explanation */
+  videoUrl?: string;
   questions: QuestionAttemptDto[];
   // Attempt limit tracking
   attemptsMade?: number;

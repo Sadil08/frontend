@@ -5,6 +5,7 @@ import { AttemptHistoryItem, AttemptHistoryProps } from '@/types';
 import { Card, Tag, Empty, Button, Typography } from 'antd';
 import { ClockCircleOutlined, TrophyOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import YouTubeEmbed from './YouTubeEmbed';
 
 const { Title, Text } = Typography;
 
@@ -17,7 +18,8 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
     attempts,
     paperId,
     loading = false,
-    bundleId
+    bundleId,
+    videoUrl
 }) => {
     const router = useRouter();
 
@@ -108,6 +110,16 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
                     </div>
                 </div>
             </div>
+
+            {/* Video Explanation */}
+            {videoUrl && (
+                <div className="mb-6">
+                    <Title level={4} className="mb-3">
+                        Paper Explanation
+                    </Title>
+                    <YouTubeEmbed videoUrl={videoUrl} title="Paper Explanation Video" />
+                </div>
+            )}
 
             {/* Attempt Cards */}
             <div className="space-y-4">

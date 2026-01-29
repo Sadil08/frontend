@@ -14,6 +14,7 @@ import { LeaderboardEntry } from '@/types/leaderboardTypes';
 import { message, Modal } from 'antd';
 
 import { AttemptStatusBanner } from '@/components/AttemptStatusBanner';
+import YouTubeEmbed from '@/components/YouTubeEmbed';
 
 function ResultsContent() {
     const params = useParams();
@@ -161,6 +162,17 @@ function ResultsContent() {
                                 }}
                                 onRetrySuccess={fetchResults}
                             />
+
+                            {/* Paper Explanation Video */}
+                            {attempt.videoUrl && (
+                                <div className="mb-6 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span>🎬</span> Paper Explanation
+                                    </h2>
+                                    <YouTubeEmbed videoUrl={attempt.videoUrl} title="Paper Solution Walkthrough" />
+                                </div>
+                            )}
+
                             <div className={`rounded-2xl p-8 mb-10 animate-slide-up shadow-card border ${performancePercentage >= 80 ? 'bg-gradient-to-br from-green-50 to-white border-green-200' :
                                 performancePercentage >= 60 ? 'bg-gradient-to-br from-blue-50 to-white border-blue-200' :
                                     performancePercentage >= 40 ? 'bg-gradient-to-br from-amber-50 to-white border-amber-200' :

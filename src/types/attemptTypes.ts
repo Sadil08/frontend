@@ -70,6 +70,8 @@ export interface AttemptDetails {
     totalMarks: number;
     /** Paper's configured total marks (for percentage calculation) */
     paperTotalMarks?: number;
+    /** YouTube video URL for paper explanation */
+    videoUrl?: string;
     overallFeedback: string;
     answers: AttemptAnswer[];
     // Analysis status fields
@@ -86,6 +88,7 @@ export interface AttemptHistoryProps {
     paperId: number;
     loading?: boolean;
     bundleId?: number;
+    videoUrl?: string;
     onAttemptSelect?: (attemptId: number) => void;
 }
 

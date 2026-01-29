@@ -220,6 +220,7 @@ export default function PaperDetailsPage() {
                                                     paperId={paperId}
                                                     loading={loadingAttempts}
                                                     bundleId={bundleId ? parseInt(bundleId) : undefined}
+                                                    videoUrl={paper?.videoUrl}
                                                 />
                                             </div>
                                         </div>

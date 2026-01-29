@@ -77,6 +77,8 @@ export interface AdminPaperDto {
     maxFreeAttempts: number;
     /** Total marks for the paper (used for weighted scoring) */
     totalMarks?: number;
+    /** YouTube video URL for paper explanation */
+    videoUrl?: string;
     createdAt: string;
     updatedAt: string;
     createdBy: number | null;
@@ -119,6 +121,8 @@ export interface PaperCreateDto {
     maxFreeAttempts: number;
     /** Total marks for the paper (used for weighted scoring) */
     totalMarks?: number;
+    /** YouTube video URL for paper explanation */
+    videoUrl?: string;
     bundleIds?: number[];
     subjectId?: number;
 }
