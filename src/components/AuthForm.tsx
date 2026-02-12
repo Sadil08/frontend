@@ -100,7 +100,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
                 className="rounded-lg"
               />
             </Form.Item>
-            {isRegister && (
+            {/* WALLET_DISABLED: Referral code field hidden from registration.
+                Backend still accepts referralCode in RegisterRequest for future reimplementation.
+                When re-enabling, uncomment the Form.Item below. */}
+            {/* {isRegister && (
               <Form.Item
                 name="referralCode"
                 rules={[
@@ -118,7 +121,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
                   }}
                 />
               </Form.Item>
-            )}
+            )} */}
 
             <Form.Item>
               <Button

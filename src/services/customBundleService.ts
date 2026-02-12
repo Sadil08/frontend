@@ -107,9 +107,13 @@ export const customBundleService = {
     /**
      * Purchase the bundle
      */
-    purchaseBundle: async (bundleId: number): Promise<CustomBundleDto> => {
+    /**
+     * Purchase the bundle
+     */
+    purchaseBundle: async (bundleId: number, paymentReference: string): Promise<CustomBundleDto> => {
         const response = await apiClient.post<CustomBundleDto>(
-            `/api/custom-bundles/${bundleId}/purchase`
+            `/api/custom-bundles/${bundleId}/purchase`,
+            { paymentReference }
         );
         return response.data;
     },

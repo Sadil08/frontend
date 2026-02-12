@@ -29,11 +29,12 @@ const Header: React.FC = () => {
       label: <Link href="/dashboard">Dashboard</Link>,
       icon: <DashboardOutlined />,
     },
-    {
-      key: 'wallet',
-      label: <Link href="/wallet">My Wallet</Link>,
-      icon: <BarChartOutlined />,
-    },
+    // WALLET_DISABLED: My Wallet menu item hidden
+    // {
+    //   key: 'wallet',
+    //   label: <Link href="/wallet">My Wallet</Link>,
+    //   icon: <BarChartOutlined />,
+    // },
     {
       key: 'logout',
       label: 'Logout',
@@ -53,7 +54,8 @@ const Header: React.FC = () => {
         <>
           <Link href="/bundles" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/bundles')} text-lg`}>Bundles</Link>
           <Link href="/dashboard" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/dashboard')} text-lg`}>Dashboard</Link>
-          <Link href="/wallet" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/wallet')} text-lg`}>Wallet</Link>
+          {/* WALLET_DISABLED: Wallet nav link hidden */}
+          {/* <Link href="/wallet" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/wallet')} text-lg`}>Wallet</Link> */}
           <Link href="/feedback" onClick={() => setMobileMenuOpen(false)} className={`${isActive('/feedback')} text-lg`}>Feedback</Link>
         </>
       )}
@@ -96,7 +98,8 @@ const Header: React.FC = () => {
               <>
                 <Link href="/bundles" className={`${isActive('/bundles')} transition-colors duration-200`}>Bundles</Link>
                 <Link href="/dashboard" className={`${isActive('/dashboard')} transition-colors duration-200`}>Dashboard</Link>
-                <Link href="/wallet" className={`${isActive('/wallet')} transition-colors duration-200`}>Wallet</Link>
+                {/* WALLET_DISABLED: Wallet nav link hidden */}
+                {/* <Link href="/wallet" className={`${isActive('/wallet')} transition-colors duration-200`}>Wallet</Link> */}
                 <Link href="/feedback" className={`${isActive('/feedback')} transition-colors duration-200`}>Feedback</Link>
               </>
             )}

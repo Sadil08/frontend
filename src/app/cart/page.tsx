@@ -2,40 +2,28 @@
 
 import React, { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { Button, List, Card, Typography, Empty, message, Divider } from 'antd';
+import { Button, List, Typography, Empty, message, Divider } from 'antd';
 import { DeleteOutlined, ShoppingOutlined, CreditCardOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import apiClient from '@/utils/apiClient';
+import PayHereCheckout from '@/components/PayHereCheckout';
 
 const { Title, Text } = Typography;
 
 const CartPage: React.FC = () => {
     const { items, removeFromCart, total, clearCart } = useCart();
     const [processing, setProcessing] = useState(false);
-    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [showPayment, setShowPayment] = useState(false);
     const router = useRouter();
 
-    React.useEffect(() => {
-        const fetchBalance = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                if (token) {
-                    const res = await apiClient.get('/api/wallet/balance');
-                    setWalletBalance(res.data);
-                }
-            } catch (err) {
-                console.error("Failed to fetch wallet balance", err);
-            }
-        };
-        fetchBalance();
-    }, []);
+    // WALLET_DISABLED: Wallet balance fetching removed.
+    // When re-enabling wallet, restore the useEffect here to fetch wallet balance.
 
-    const handleCheckout = async () => {
-        if (items.length === 0) return;
-
+    const handlePaymentSuccess = async (paymentReference: string) => {
+        setShowPayment(false);
         setProcessing(true);
         try {
-            await apiClient.post('/api/purchase/checkout', {});
+            await apiClient.post('/api/purchase/checkout', { paymentReference });
 
             message.success("Purchase successful! You can now access your bundles.");
             clearCart();
@@ -138,50 +126,41 @@ const CartPage: React.FC = () => {
                             </div>
                         </div>
 
-                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-                            <div className="flex justify-between items-center mb-1">
-                                <Text className="text-sm text-blue-800">Your Wallet Balance</Text>
-                                <Text className="font-bold text-blue-900">${walletBalance?.toFixed(2) || '0.00'}</Text>
-                            </div>
-                            {walletBalance !== null && walletBalance < total && (
-                                <Text className="text-xs text-red-600 block mt-2">
-                                    ⚠️ Insufficient balance to complete this purchase.
-                                </Text>
-                            )}
-                        </div>
+                        {/* WALLET_DISABLED: Wallet balance section removed.
+                            When re-enabling wallet, restore the wallet balance display and
+                            conditional buttons (Pay with Wallet / Top Up Wallet First) here. */}
 
-                        {walletBalance !== null && walletBalance < total ? (
+                        <div className="mt-6">
                             <Button
                                 type="primary"
                                 size="large"
                                 block
-                                onClick={() => router.push('/wallet')}
-                                className="h-14 text-lg font-semibold bg-amber-500 hover:bg-amber-600 border-none shadow-lg transition-all"
-                            >
-                                Top Up Wallet First
-                            </Button>
-                        ) : (
-                            <Button
-                                type="primary"
-                                size="large"
-                                block
-                                onClick={handleCheckout}
+                                onClick={() => setShowPayment(true)}
                                 loading={processing}
                                 icon={<CreditCardOutlined />}
                                 className="h-14 text-lg font-semibold bg-primary-600 hover:bg-primary-700 border-none shadow-lg shadow-primary-600/20 hover:shadow-primary-600/30 transition-all font-outfit"
                             >
-                                Pay with Wallet
+                                Pay with Card
                             </Button>
-                        )}
+                        </div>
 
                         <div className="mt-6 text-center">
                             <Text type="secondary" className="text-xs">
-                                Secure checkout powered by PayHere (Mock)
+                                Secure checkout powered by PayHere
                             </Text>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* PayHere Checkout Modal */}
+            <PayHereCheckout
+                visible={showPayment}
+                amount={total}
+                description={`${items.length} bundle${items.length !== 1 ? 's' : ''} purchase`}
+                onSuccess={handlePaymentSuccess}
+                onClose={() => setShowPayment(false)}
+            />
         </div>
     );
 };

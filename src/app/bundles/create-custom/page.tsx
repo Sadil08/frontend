@@ -1,20 +1,20 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { message, Input, Button, Card, Tag, Empty, Spin, Modal, Select, Pagination } from 'antd';
+import { message, Input, Button, Card, Tag, Empty, Spin, Modal, Pagination } from 'antd';
 import {
     PlusOutlined,
     DeleteOutlined,
     ShoppingCartOutlined,
-    SearchOutlined,
     BookOutlined,
-    DollarOutlined
+    CreditCardOutlined
 } from '@ant-design/icons';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { customBundleService, CustomBundleDto } from '@/services/customBundleService';
 import { paperService } from '@/services/paperService';
 import { PaperDto } from '@/types';
+import PayHereCheckout from '@/components/PayHereCheckout';
 
 const { Search } = Input;
 
@@ -28,6 +28,7 @@ export default function CreateCustomBundlePage() {
     const [selectedPapers, setSelectedPapers] = useState<Set<number>>(new Set());
     const [purchasing, setPurchasing] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showPayment, setShowPayment] = useState(false);
     const [bundleName, setBundleName] = useState('');
     const [bundleDescription, setBundleDescription] = useState('');
     const [creating, setCreating] = useState(false);
@@ -147,29 +148,31 @@ export default function CreateCustomBundlePage() {
         });
     };
 
-    // Purchase bundle
-    const handlePurchase = async () => {
+    // Handle Mock PayHere Payment Success
+    const handlePaymentSuccess = async (paymentReference: string) => {
+        if (!bundle) return;
+
+        setShowPayment(false);
+        setPurchasing(true);
+
+        try {
+            await customBundleService.purchaseBundle(bundle.id, paymentReference);
+            message.success('Bundle purchased! You can now access the papers.');
+            router.push('/dashboard');
+        } catch (error: any) {
+            message.error(error.response?.data?.message || 'Failed to purchase bundle');
+        } finally {
+            setPurchasing(false);
+        }
+    };
+
+    // Purchase bundle (opens payment modal)
+    const handlePurchaseClick = () => {
         if (!bundle || selectedPapers.size === 0) {
             message.warning('Please add at least one paper');
             return;
         }
-
-        Modal.confirm({
-            title: 'Purchase Bundle?',
-            content: `Total: $${(selectedPapers.size * pricePerPaper).toFixed(2)}. This will be deducted from your wallet.`,
-            onOk: async () => {
-                try {
-                    setPurchasing(true);
-                    const purchased = await customBundleService.purchaseBundle(bundle.id);
-                    message.success('Bundle purchased! You can now access the papers.');
-                    router.push('/dashboard');
-                } catch (error: any) {
-                    message.error(error.response?.data?.message || 'Failed to purchase bundle');
-                } finally {
-                    setPurchasing(false);
-                }
-            }
-        });
+        setShowPayment(true);
     };
 
     // Filter papers by search
@@ -365,13 +368,14 @@ export default function CreateCustomBundlePage() {
                                             type="primary"
                                             size="large"
                                             block
-                                            icon={<ShoppingCartOutlined />}
-                                            onClick={handlePurchase}
+                                            icon={<CreditCardOutlined />}
+                                            onClick={handlePurchaseClick}
                                             loading={purchasing}
                                             disabled={selectedPapers.size === 0}
+                                            className="bg-primary-600 hover:bg-primary-700 border-none font-semibold"
                                         >
-                                            Purchase Bundle
-                                        </Button>
+                                            Pay with Card
+                                        </Button> {/* WALLET_DISABLED: Switched to Pay with Card */}
                                         <Button
                                             danger
                                             block
@@ -421,6 +425,17 @@ export default function CreateCustomBundlePage() {
                             </div>
                         </div>
                     </Modal>
+
+                    {/* PayHere Checkout Modal */}
+                    {bundle && (
+                        <PayHereCheckout
+                            visible={showPayment}
+                            amount={totalPrice}
+                            description={`Custom Bundle: ${bundle.name} (${selectedPapers.size} papers)`}
+                            onSuccess={handlePaymentSuccess}
+                            onClose={() => setShowPayment(false)}
+                        />
+                    )}
                 </div>
             </div>
         </ProtectedRoute>
