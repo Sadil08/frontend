@@ -10,3 +10,11 @@ export const register = async (email: string, password: string, name: string, re
   const response = await apiClient.post<UserResponse>('/api/auth/register', { email, password, name, referralCode });
   return response.data;
 };
+
+export const forgotPassword = async (email: string): Promise<void> => {
+  await apiClient.post('/api/auth/forgot-password', { email });
+};
+
+export const resetPassword = async (email: string, otp: string, newPassword: string): Promise<void> => {
+  await apiClient.post('/api/auth/reset-password', { email, otp, newPassword });
+};

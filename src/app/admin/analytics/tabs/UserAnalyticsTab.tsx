@@ -236,7 +236,7 @@ const UserAnalyticsTab: React.FC<UserAnalyticsTabProps> = ({ dateRange }) => {
                     <DataTable
                         title="All Users"
                         data={users}
-                        columns={userColumns}
+                        columns={userColumns as any}
                         exportable
                         exportFilename="users"
                         pagination={{
@@ -245,13 +245,13 @@ const UserAnalyticsTab: React.FC<UserAnalyticsTabProps> = ({ dateRange }) => {
                             total: totalUsers,
                             showSizeChanger: true,
                             pageSizeOptions: ['10', '20', '50', '100'],
-                            onChange: (page, pageSize) => {
+                            onChange: (page: number, pageSize: number) => {
                                 setPagination({
                                     page: page - 1,
                                     size: pageSize || pagination.size
                                 });
                             }
-                        }}
+                        } as any}
                     />
                 </Col>
             </Row>

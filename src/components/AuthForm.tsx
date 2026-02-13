@@ -100,6 +100,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
                 className="rounded-lg"
               />
             </Form.Item>
+            {!isRegister && (
+              <div className="flex justify-end -mt-4 mb-4">
+                <Link href="/forgot-password" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+                  Forgot password?
+                </Link>
+              </div>
+            )}
             {/* WALLET_DISABLED: Referral code field hidden from registration.
                 Backend still accepts referralCode in RegisterRequest for future reimplementation.
                 When re-enabling, uncomment the Form.Item below. */}
