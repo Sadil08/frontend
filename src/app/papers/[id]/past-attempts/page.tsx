@@ -1,13 +1,15 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Card, Button, Spin, message, Typography, Empty } from 'antd';
 import { ArrowLeftOutlined, ClockCircleOutlined, TrophyOutlined, EyeOutlined } from '@ant-design/icons';
 import Header from '@/components/Header';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { AttemptStatusBanner } from '@/components/AttemptStatusBanner';
 import { paperService } from '@/services/paperService';
-import { AttemptHistoryItem } from '@/types';
+import { AttemptHistoryItem, PaperDto } from '@/types';
+import YouTubeEmbed from '@/components/YouTubeEmbed';
 
 const { Title, Text } = Typography;
 
@@ -18,18 +20,52 @@ const { Title, Text } = Typography;
 export default function PastAttemptsPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const paperId = parseInt(params.id as string);
+    const bundleId = searchParams.get('bundleId');
+
+    const getLink = (path: string) => {
+        return bundleId ? `${path}?bundleId=${bundleId}` : path;
+    };
 
     const [attempts, setAttempts] = useState<AttemptHistoryItem[]>([]);
+    const [paper, setPaper] = useState<PaperDto | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [attemptInfo, setAttemptInfo] = useState<{ canAttempt: boolean, inProgressAttemptId?: number } | null>(null);
 
     useEffect(() => {
         console.log('PastAttemptsPage - useEffect triggered, paperId:', paperId); // Debug logging
         if (paperId) {
+            fetchPaper();
             fetchAttempts();
+            fetchAttemptInfo();
         }
     }, [paperId]);
+
+    const fetchPaper = async () => {
+        try {
+            const data = await paperService.getPaper(paperId);
+            setPaper(data);
+        } catch (err) {
+            console.error('Error fetching paper details:', err);
+        }
+    };
+
+    const fetchAttemptInfo = async () => {
+        try {
+            const infoMap = await paperService.getAttemptInfo([paperId], bundleId ? parseInt(bundleId) : undefined);
+            const info = infoMap[paperId];
+            if (info) {
+                setAttemptInfo({
+                    canAttempt: info.canAttempt ?? true,
+                    inProgressAttemptId: info.inProgressAttemptId
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching attempt info:', err);
+        }
+    };
 
     const fetchAttempts = async () => {
         try {
@@ -47,7 +83,7 @@ export default function PastAttemptsPage() {
     };
 
     const handleBackClick = () => {
-        router.push(`/papers/${paperId}`);
+        router.push(getLink(`/papers/${paperId}`));
     };
 
     const handleAttemptClick = (attemptId: number) => {
@@ -176,6 +212,16 @@ export default function PastAttemptsPage() {
                         </Text>
                     </div>
 
+                    {/* Paper Explanation Video */}
+                    {paper?.videoUrl && (
+                        <div className="mb-8 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <span>🎬</span> Paper Explanation
+                            </h2>
+                            <YouTubeEmbed videoUrl={paper.videoUrl} title="Paper Explanation Video" />
+                        </div>
+                    )}
+
                     {/* Attempts Summary */}
                     {attempts.length > 0 && (
                         <Card className="card-elevated mb-8 bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
@@ -230,7 +276,7 @@ export default function PastAttemptsPage() {
                                     type="primary"
                                     size="large"
                                     icon={<TrophyOutlined />}
-                                    onClick={() => router.push(`/papers/${paperId}/attempt`)}
+                                    onClick={() => router.push(getLink(`/papers/${paperId}/attempt`))}
                                     className="mt-4"
                                 >
                                     Start Your First Attempt
@@ -293,7 +339,7 @@ export default function PastAttemptsPage() {
                                                         <div className="flex items-center gap-6 text-sm text-gray-600 mb-3">
                                                             <div className="flex items-center gap-1">
                                                                 <ClockCircleOutlined />
-                                                                {formatDate(attempt.completedAt)}
+                                                                {formatDate(attempt.completedAt || attempt.startedAt)}
                                                             </div>
                                                             <div>
                                                                 ⏱️ {attempt.timeTakenMinutes} min
@@ -340,6 +386,21 @@ export default function PastAttemptsPage() {
                                                 </div>
                                             </div>
 
+                                            {/* Retry Analysis Banner - Show if analysis failed/incomplete */}
+                                            {(!attempt.analysisCompleted || attempt.analysisError) && attempt.status === 'SUBMITTED' && (
+                                                <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+                                                    <AttemptStatusBanner
+                                                        attempt={{
+                                                            id: attempt.id,
+                                                            analysisCompleted: attempt.analysisCompleted,
+                                                            analysisError: attempt.analysisError || undefined,
+                                                            submissionCount: attempt.submissionCount || 1,
+                                                        }}
+                                                        onRetrySuccess={fetchAttempts}
+                                                    />
+                                                </div>
+                                            )}
+
                                             {/* View Details Button */}
                                             <div className="mt-4 pt-4 border-t border-gray-100">
                                                 <Button
@@ -362,16 +423,25 @@ export default function PastAttemptsPage() {
                         <Card className="card-base">
                             <div className="space-y-4">
                                 <Title level={4} className="text-gray-700">
-                                    Ready for another attempt?
+                                    {attemptInfo?.inProgressAttemptId
+                                        ? 'Continue your attempt'
+                                        : attemptInfo?.canAttempt === false
+                                            ? 'All attempts used'
+                                            : 'Ready for another attempt?'}
                                 </Title>
                                 <div className="space-x-4">
                                     <Button
                                         type="primary"
                                         size="large"
                                         icon={<TrophyOutlined />}
-                                        onClick={() => router.push(`/papers/${paperId}/attempt`)}
+                                        onClick={() => router.push(getLink(`/papers/${paperId}/attempt`))}
+                                        disabled={attemptInfo?.canAttempt === false && !attemptInfo?.inProgressAttemptId}
                                     >
-                                        Start New Attempt
+                                        {attemptInfo?.inProgressAttemptId
+                                            ? 'Resume Attempt'
+                                            : attemptInfo?.canAttempt === false
+                                                ? 'No Attempts Left'
+                                                : 'Start New Attempt'}
                                     </Button>
                                     <Button
                                         size="large"

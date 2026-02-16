@@ -13,6 +13,12 @@ export interface BundleFilterParams {
   minPrice?: number;
   maxPrice?: number;
   name?: string;
+  // Pagination & Sorting
+  page?: number;
+  size?: number;
+  search?: string; // alias for name, or general search
+  sortBy?: string;
+  sortDir?: 'ASC' | 'DESC';
 }
 
 /**
@@ -47,8 +53,16 @@ export const bundleService = {
    * @param filters - Optional query parameters for filtering
    * @returns Array of bundle summaries
    */
-  getBundles: async (filters?: BundleFilterParams): Promise<PaperBundleSummaryDto[]> => {
-    const response = await apiClient.get<PaperBundleSummaryDto[]>('/api/paper-bundles/filter', { params: filters });
+  /**
+   * Get all public bundles with optional filters and pagination
+   * @param filters - Optional query parameters for filtering and pagination
+   * @returns Bundle list or Page object depending on pagination
+   */
+  getBundles: async (filters?: BundleFilterParams): Promise<any> => {
+    // If pagination params are present, the backend returns a Page object
+    // otherwise it might return a List (if using the old endpoint, but we replaced it)
+    // The new endpoint ALWAYS returns a Page.
+    const response = await apiClient.get<any>('/api/paper-bundles', { params: filters });
     return response.data;
   },
 

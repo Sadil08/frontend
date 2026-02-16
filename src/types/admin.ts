@@ -71,12 +71,14 @@ export interface AdminPaperDto {
     name: string;
     description: string;
     type: 'MCQ' | 'ESSAY' | 'MIXED';
-    bundleId: number | null;
+    bundleIds: number[]; // Changed from bundleId
     subjectId?: number | null;
     subjectName?: string | null;
     maxFreeAttempts: number;
     /** Total marks for the paper (used for weighted scoring) */
     totalMarks?: number;
+    /** YouTube video URL for paper explanation */
+    videoUrl?: string;
     createdAt: string;
     updatedAt: string;
     createdBy: number | null;
@@ -119,7 +121,9 @@ export interface PaperCreateDto {
     maxFreeAttempts: number;
     /** Total marks for the paper (used for weighted scoring) */
     totalMarks?: number;
-    bundleId?: number;
+    /** YouTube video URL for paper explanation */
+    videoUrl?: string;
+    bundleIds?: number[];
     subjectId?: number;
 }
 

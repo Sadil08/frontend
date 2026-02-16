@@ -570,6 +570,28 @@ export default function PaperEditPage() {
                         >
                             <InputNumber min={1} className="w-full" />
                         </Form.Item>
+
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <Form.Item
+                                name="requiresImageDisplay"
+                                valuePropName="checked"
+                                initialValue={false}
+                                label="Display Image With Question?"
+                                tooltip="If checked, the uploaded image will be shown to students alongside the text."
+                            >
+                                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                            </Form.Item>
+
+                            <Form.Item
+                                name="hideQuestionText"
+                                valuePropName="checked"
+                                initialValue={false}
+                                label="Hide Question Text?"
+                                tooltip="If checked, only the image will be shown to students (useful for image-based questions)."
+                            >
+                                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                            </Form.Item>
+                        </div>
                         <Form.Item
                             shouldUpdate={(prevValues, currentValues) =>
                                 prevValues.type !== currentValues.type
@@ -582,22 +604,15 @@ export default function PaperEditPage() {
                                         <div className="grid grid-cols-3 gap-4 mb-4">
                                             <Form.Item
                                                 name="requiresImageDisplay"
-                                                valuePropName="checked"
-                                                initialValue={false}
-                                                label="Display Image With Question?"
-                                                tooltip="If checked, the uploaded image will be shown to students alongside the text."
+                                                hidden
                                             >
-                                                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                                                <Input />
                                             </Form.Item>
-
                                             <Form.Item
                                                 name="hideQuestionText"
-                                                valuePropName="checked"
-                                                initialValue={false}
-                                                label="Hide Question Text?"
-                                                tooltip="If checked, only the image will be shown to students (useful for image-based questions)."
+                                                hidden
                                             >
-                                                <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                                                <Input />
                                             </Form.Item>
 
                                             <Form.Item

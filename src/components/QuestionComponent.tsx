@@ -11,6 +11,9 @@ interface Question {
     text: string;
     type: 'MCQ' | 'ESSAY';
     options?: Option[];
+    imageUrl?: string;
+    requiresImageDisplay?: boolean;
+    hideQuestionText?: boolean;
 }
 
 interface QuestionComponentProps {
@@ -26,14 +29,35 @@ export const QuestionComponent: React.FC<QuestionComponentProps> = ({
     onChange,
     index
 }) => {
+    const getFullImageUrl = (url?: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 transition-all hover:shadow-md">
             <div className="flex gap-4 mb-6">
                 <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-primary-50 text-primary-700 rounded-full font-bold text-sm border border-primary-100">
                     {index + 1}
                 </span>
-                <div className="text-lg font-medium text-secondary-900 pt-0.5 leading-relaxed">
-                    {question.text}
+                <div className="flex-1">
+                    {!question.hideQuestionText && (
+                        <div className="text-lg font-medium text-secondary-900 pt-0.5 leading-relaxed">
+                            {question.text}
+                        </div>
+                    )}
+                    {question.requiresImageDisplay && question.imageUrl && (
+                        <div className="mt-4">
+                            <img
+                                src={getFullImageUrl(question.imageUrl)}
+                                alt="Question Reference"
+                                className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                                style={{ maxHeight: '300px' }}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -46,8 +70,8 @@ export const QuestionComponent: React.FC<QuestionComponentProps> = ({
                                     key={option.id}
                                     value={option.id}
                                     className={`w-full p-4 border rounded-xl transition-all duration-200 flex items-center ${value === option.id
-                                            ? 'border-primary-500 bg-primary-50 shadow-sm'
-                                            : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                                        ? 'border-primary-500 bg-primary-50 shadow-sm'
+                                        : 'border-gray-200 hover:bg-gray-50 hover:border-gray-300'
                                         }`}
                                 >
                                     <span className={`text-base ${value === option.id ? 'text-primary-900 font-medium' : 'text-secondary-700'}`}>

@@ -57,8 +57,9 @@ export default function PaperManagementPage() {
             type: record.type,
             maxFreeAttempts: record.maxFreeAttempts,
             totalMarks: record.totalMarks,
-            bundleId: record.bundleId,
-            subjectId: record.subjectId
+            bundleIds: record.bundleIds,
+            subjectId: record.subjectId,
+            videoUrl: record.videoUrl
         });
         setIsModalOpen(true);
     };
@@ -94,8 +95,9 @@ export default function PaperManagementPage() {
                 type: values.type,
                 maxFreeAttempts: values.maxFreeAttempts || 3,
                 totalMarks: values.totalMarks || undefined,
-                bundleId: values.bundleId || undefined,
-                subjectId: values.subjectId || undefined
+                bundleIds: values.bundleIds || [],
+                subjectId: values.subjectId || undefined,
+                videoUrl: values.videoUrl || undefined
             };
 
             if (editingId) {
@@ -113,10 +115,20 @@ export default function PaperManagementPage() {
         }
     };
 
-    const getBundleName = (bundleId: number | null) => {
-        if (!bundleId) return <Tag className="rounded-full">No Bundle</Tag>;
-        const bundle = bundles.find(b => b.id === bundleId);
-        return bundle ? <span className="text-primary-600 font-medium">{bundle.name}</span> : `Bundle #${bundleId}`;
+    const renderBundles = (bundleIds: number[]) => {
+        if (!bundleIds || bundleIds.length === 0) return <Tag className="rounded-full">No Bundle</Tag>;
+        return (
+            <div className="flex flex-wrap gap-1">
+                {bundleIds.map(id => {
+                    const bundle = bundles.find(b => b.id === id);
+                    return (
+                        <Tag key={id} className="rounded-full bg-blue-50 text-blue-700 border-blue-200">
+                            {bundle ? bundle.name : `Bundle #${id}`}
+                        </Tag>
+                    );
+                })}
+            </div>
+        );
     };
 
     const columns = [
@@ -145,11 +157,11 @@ export default function PaperManagementPage() {
             )
         },
         {
-            title: 'Bundle',
-            dataIndex: 'bundleId',
-            key: 'bundleId',
-            width: 150,
-            render: (bundleId: number | null) => getBundleName(bundleId)
+            title: 'Bundles',
+            dataIndex: 'bundleIds',
+            key: 'bundleIds',
+            width: 200,
+            render: (bundleIds: number[]) => renderBundles(bundleIds)
         },
         {
             title: 'Questions',
@@ -305,6 +317,17 @@ export default function PaperManagementPage() {
                             <Input.TextArea rows={3} placeholder="Describe the paper content..." className="rounded-lg" />
                         </Form.Item>
                         <Form.Item
+                            name="videoUrl"
+                            label="Explained Video URL (Optional)"
+                            tooltip="Link to a YouTube video explaining this paper. Students can watch this in their attempt history."
+                            rules={[
+                                { type: 'url', message: 'Please enter a valid URL' }
+                            ]}
+                        >
+                            <Input placeholder="https://www.youtube.com/watch?v=..." />
+                        </Form.Item>
+
+                        <Form.Item
                             name="type"
                             label="Type"
                             rules={[{ required: true, message: 'Type is required' }]}
@@ -315,8 +338,15 @@ export default function PaperManagementPage() {
                                 <Select.Option value="MIXED">Mixed (MCQ + Essay)</Select.Option>
                             </Select>
                         </Form.Item>
-                        <Form.Item name="bundleId" label="Assign to Bundle (Optional)">
-                            <Select showSearch optionFilterProp="children" placeholder="Select a bundle" allowClear className="rounded-lg">
+                        <Form.Item name="bundleIds" label="Assign to Bundles (Optional)">
+                            <Select
+                                mode="multiple"
+                                showSearch
+                                optionFilterProp="children"
+                                placeholder="Select bundles"
+                                allowClear
+                                className="rounded-lg"
+                            >
                                 {bundles.map(b => (
                                     <Select.Option key={b.id} value={b.id}>
                                         {b.name}

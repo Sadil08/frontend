@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Button } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import Header from '@/components/Header';
@@ -14,6 +14,9 @@ import { AttemptResults } from '@/components/AttemptResults';
 export default function AttemptDetailsPage() {
     const params = useParams();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const bundleId = searchParams.get('bundleId');
+    const getLink = (path: string) => bundleId ? `${path}?bundleId=${bundleId}` : path;
     const attemptId = Number(params.attemptId);
     const paperId = Number(params.id);
 
@@ -24,11 +27,11 @@ export default function AttemptDetailsPage() {
                 <div className="max-w-7xl mx-auto p-6">
                     <Button
                         icon={<ArrowLeftOutlined />}
-                        onClick={() => router.push(`/papers/${paperId}`)}
+                        onClick={() => router.push(getLink(`/papers/${paperId}/past-attempts`))}
                         className="mb-4"
                         size="large"
                     >
-                        Back to Paper
+                        Back to Past Attempts
                     </Button>
 
                     <AttemptResults attemptId={attemptId} />

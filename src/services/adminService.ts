@@ -182,8 +182,14 @@ export const adminService = {
      * Get all users with statistics
      * GET /api/admin/users
      */
-    getUsers: async (): Promise<AdminUserDto[]> => {
-        const response = await apiClient.get<AdminUserDto[]>('/api/admin/users');
+    getUsers: async (search?: string, page = 0, size = 10): Promise<{ content: AdminUserDto[], totalElements: number }> => {
+        const response = await apiClient.get<any>('/api/admin/users', {
+            params: { search, page, size }
+        });
+        // Handle both Page structure and legacy List structure gracefully (though backend now returns Page)
+        if (Array.isArray(response.data)) {
+            return { content: response.data, totalElements: response.data.length };
+        }
         return response.data;
     },
 

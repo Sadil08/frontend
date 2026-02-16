@@ -12,9 +12,12 @@
     "@ant-design/icons": "^5.5.2",
     "antd": "5.22.4",
     "axios": "^1.13.2",
+    "date-fns": "^2.30.0",
+    "dayjs": "^1.11.19",
     "next": "^14.2.35",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "recharts": "^2.10.0"
   },
   "devDependencies": {
     "@types/node": "^20",

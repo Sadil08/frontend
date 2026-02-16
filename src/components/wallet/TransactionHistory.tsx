@@ -1,11 +1,18 @@
 import React from "react";
 import { WalletTransaction } from "@/types/wallet";
+import { Pagination } from "antd";
 
 interface TransactionHistoryProps {
     transactions: WalletTransaction[];
+    pagination?: {
+        current: number;
+        pageSize: number;
+        total: number;
+        onChange: (page: number, size: number) => void;
+    };
 }
 
-export default function TransactionHistory({ transactions }: TransactionHistoryProps) {
+export default function TransactionHistory({ transactions, pagination }: TransactionHistoryProps) {
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-50 flex justify-between items-center">
@@ -50,6 +57,17 @@ export default function TransactionHistory({ transactions }: TransactionHistoryP
                     </tbody>
                 </table>
             </div>
+            {pagination && (
+                <div className="px-6 py-4 border-t border-gray-50 flex justify-end">
+                    <Pagination
+                        current={pagination.current}
+                        pageSize={pagination.pageSize}
+                        total={pagination.total}
+                        onChange={pagination.onChange}
+                        showSizeChanger
+                    />
+                </div>
+            )}
         </div>
     );
 }

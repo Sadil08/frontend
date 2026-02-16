@@ -5,6 +5,7 @@ import { AttemptHistoryItem, AttemptHistoryProps } from '@/types';
 import { Card, Tag, Empty, Button, Typography } from 'antd';
 import { ClockCircleOutlined, TrophyOutlined, EyeOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import YouTubeEmbed from './YouTubeEmbed';
 
 const { Title, Text } = Typography;
 
@@ -16,9 +17,15 @@ const { Title, Text } = Typography;
 export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
     attempts,
     paperId,
-    loading = false
+    loading = false,
+    bundleId,
+    videoUrl
 }) => {
     const router = useRouter();
+
+    const getLink = (path: string) => {
+        return bundleId ? `${path}?bundleId=${bundleId}` : path;
+    };
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -74,7 +81,7 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                 >
                     <button
-                        onClick={() => router.push(`/papers/${paperId}/attempt`)}
+                        onClick={() => router.push(getLink(`/papers/${paperId}/attempt`))}
                         className="btn-primary mt-4"
                     >
                         Start Your First Attempt
@@ -104,6 +111,16 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
                 </div>
             </div>
 
+            {/* Video Explanation */}
+            {videoUrl && (
+                <div className="mb-6">
+                    <Title level={4} className="mb-3">
+                        Paper Explanation
+                    </Title>
+                    <YouTubeEmbed videoUrl={videoUrl} title="Paper Explanation Video" />
+                </div>
+            )}
+
             {/* Attempt Cards */}
             <div className="space-y-4">
                 {attempts.map((attempt, index) => {
@@ -113,7 +130,7 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
                         <Card
                             key={attempt.id}
                             className="card-interactive hover:shadow-xl transition-all duration-300 cursor-pointer group"
-                            onClick={() => router.push(`/papers/${paperId}/attempts/${attempt.id}`)}
+                            onClick={() => router.push(getLink(`/papers/${paperId}/attempts/${attempt.id}`))}
                             hoverable
                             bodyStyle={{ padding: '24px' }}
                         >
@@ -145,7 +162,7 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
                                         <div className="flex items-center gap-6 text-sm text-gray-600 mb-3">
                                             <div className="flex items-center gap-1">
                                                 <ClockCircleOutlined />
-                                                {formatDate(attempt.completedAt)}
+                                                {formatDate(attempt.completedAt || attempt.startedAt)}
                                             </div>
                                             <div>
                                                 ⏱️ {attempt.timeTakenMinutes} min
@@ -182,8 +199,8 @@ export const AttemptHistory: React.FC<AttemptHistoryProps> = ({
                                         <div className="w-20 h-2 bg-gray-200 rounded-full mx-auto overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full transition-all duration-500 ${percentage >= 80 ? 'bg-green-500' :
-                                                        percentage >= 60 ? 'bg-blue-500' :
-                                                            percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
+                                                    percentage >= 60 ? 'bg-blue-500' :
+                                                        percentage >= 40 ? 'bg-yellow-500' : 'bg-red-500'
                                                     }`}
                                                 style={{ width: `${Math.min(100, percentage)}%` }}
                                             />
