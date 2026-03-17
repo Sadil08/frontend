@@ -11,6 +11,8 @@ import { PaperDto, PaperBundleDetailDto } from '@/types';
 import Header from '@/components/Header';
 import { Button } from 'antd';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
 export default function BundlePapers() {
     const { id } = useParams();
     const router = useRouter();
@@ -62,7 +64,7 @@ export default function BundlePapers() {
                         if (token) {
                             const paperIds = papersData.map(p => p.id).join(',');
                             const response = await fetch(
-                                `http://localhost:8080/api/papers/attempt-info?paperIds=${paperIds}&bundleId=${bundleIdNum}`,
+                                `${API_URL}/api/papers/attempt-info?paperIds=${paperIds}&bundleId=${bundleIdNum}`,
                                 { headers: { Authorization: `Bearer ${token}` } }
                             );
                             if (response.ok) {

@@ -5,7 +5,7 @@ import { Modal, Button, InputNumber, message } from 'antd';
 import { ShoppingCartOutlined, ThunderboltOutlined, CreditCardOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import PayHereCheckout from '@/components/PayHereCheckout';
-
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 interface ExtraAttemptsModalProps {
     visible: boolean;
     onClose: () => void;
@@ -46,8 +46,8 @@ export const ExtraAttemptsModal: React.FC<ExtraAttemptsModalProps> = ({
             }
 
             const url = bundleId
-                ? `http://localhost:8080/api/papers/${paperId}/extra-attempts/purchase?bundleId=${bundleId}`
-                : `http://localhost:8080/api/papers/${paperId}/extra-attempts/purchase`;
+                ? `${API_URL}/api/papers/${paperId}/extra-attempts/purchase?bundleId=${bundleId}`
+                : `${API_URL}/api/papers/${paperId}/extra-attempts/purchase`;
 
             await axios.post(
                 url,
