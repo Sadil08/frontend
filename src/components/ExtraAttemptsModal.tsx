@@ -59,9 +59,15 @@ export const ExtraAttemptsModal: React.FC<ExtraAttemptsModalProps> = ({
             onPurchaseSuccess();
             onClose();
             setQuantity(1);
-        } catch (error) {
+
+            // Auto-refresh the page after a brief delay so the user sees the success message
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+        } catch (error: any) {
             console.error('Purchase failed:', error);
-            message.error('Failed to purchase extra attempts. Please try again.');
+            const errorMsg = error?.response?.data?.message || error?.response?.data || 'Failed to purchase extra attempts. Please try again.';
+            message.error(typeof errorMsg === 'string' ? errorMsg : 'Failed to purchase extra attempts. Please try again.');
         } finally {
             setPurchasing(false);
         }

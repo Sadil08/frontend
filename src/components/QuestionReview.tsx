@@ -3,6 +3,8 @@
 import React, { memo, useEffect } from 'react';
 import { AttemptAnswer } from '@/types';
 import { CheckCircleOutlined, CloseCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { ImageLightbox } from './ImageLightbox';
+import { FormattedFeedback } from './FormattedFeedback';
 
 interface QuestionReviewProps {
     answer: AttemptAnswer;
@@ -110,7 +112,7 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                     {answer.questionImageUrl && (
                         <div className="mb-4">
                             <span className="text-xs font-semibold text-gray-500 block mb-2 font-bold uppercase tracking-tight">Question Image:</span>
-                            <img
+                            <ImageLightbox
                                 src={getFullImageUrl(answer.questionImageUrl)}
                                 alt="Question Reference"
                                 className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
@@ -150,7 +152,7 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                         {answer.imageUrl && (
                             <div className="mb-2">
                                 <span className="text-xs font-semibold text-orange-700 block mb-1 font-bold">Uploaded Handwriting:</span>
-                                <img
+                                <ImageLightbox
                                     src={getFullImageUrl(answer.imageUrl)}
                                     alt="Handwritten Answer"
                                     className="max-w-full h-auto rounded border border-orange-200 shadow-sm hover:shadow-md transition-all"
@@ -213,6 +215,22 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                         Correct Answer
                     </h4>
                     <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded-lg min-h-[100px] hover:bg-green-100 transition-colors duration-200">
+                        {/* Model Answer Image */}
+                        {answer.correctAnswerImageUrl && (
+                            <div className="mb-3">
+                                <span className="text-xs font-semibold text-green-700 block mb-1 uppercase tracking-tight">Model Answer Image:</span>
+                                <ImageLightbox
+                                    src={getFullImageUrl(answer.correctAnswerImageUrl)}
+                                    alt="Model Answer"
+                                    className="max-w-full h-auto rounded border border-green-200 shadow-sm hover:shadow-md transition-all"
+                                    style={{ maxHeight: '400px' }}
+                                    onError={(e) => {
+                                        console.error('Failed to load model answer image:', answer.correctAnswerImageUrl);
+                                        e.currentTarget.style.display = 'none';
+                                    }}
+                                />
+                            </div>
+                        )}
                         <p className="text-gray-900 leading-relaxed font-medium text-sm sm:text-base">
                             {answer.correctAnswerText || answer.correctOptionText || (
                                 answer.correctOptionId ?
@@ -243,9 +261,7 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                                 </div>
                             </div>
                             <div className="flex-1">
-                                <p className="text-gray-800 leading-relaxed text-base font-medium">
-                                    {answer.aiFeedback}
-                                </p>
+                                <FormattedFeedback content={answer.aiFeedback} />
                             </div>
                         </div>
                     </div>

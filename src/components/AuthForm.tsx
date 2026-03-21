@@ -36,8 +36,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ isRegister }) => {
         message.success('Welcome back!');
         router.push(payload.role === 'ADMIN' ? '/admin' : '/dashboard');
       }
-    } catch (error) {
-      message.error('Authentication failed. Please check your credentials.');
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        message.error('Invalid email or password. Please try again.');
+      } else if (status === 404) {
+        message.error('No account found with this email. Please register first.');
+      } else if (!error?.response) {
+        message.error('Unable to connect to server. Please check your connection.');
+      } else {
+        message.error('Authentication failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

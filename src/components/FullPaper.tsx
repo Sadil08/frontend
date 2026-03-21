@@ -345,10 +345,10 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                     </div>
                     <button
                         onClick={handleSubmitClick}
-                        disabled={isSubmitting || answeredQuestions === 0}
+                        disabled={isSubmitting}
                         className={`
                             px-8 py-3 text-lg font-bold rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5
-                            ${isSubmitting || answeredQuestions === 0
+                            ${isSubmitting
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
                                 : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-600/30'
                             }

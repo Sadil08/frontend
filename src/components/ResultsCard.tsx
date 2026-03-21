@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { AttemptAnswer } from '@/types';
+import { ImageLightbox } from './ImageLightbox';
+import { FormattedFeedback } from './FormattedFeedback';
 
 /**
  * Props for ResultsCard component
@@ -104,7 +106,7 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({
                     {answer.questionImageUrl && (
                         <div className="mb-4">
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">Original Question Image:</span>
-                            <img
+                            <ImageLightbox
                                 src={getFullImageUrl(answer.questionImageUrl)}
                                 alt="Question Reference"
                                 className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
@@ -149,7 +151,7 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({
                     {answer.imageUrl && (
                         <div className="mb-3">
                             <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-2">Uploaded Handwriting:</span>
-                            <img
+                            <ImageLightbox
                                 src={getFullImageUrl(answer.imageUrl)}
                                 alt="Handwritten Answer"
                                 className="max-w-full h-auto rounded border border-orange-100 shadow-sm"
@@ -193,9 +195,7 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({
                     </h4>
                     <div className="bg-white rounded-xl p-5 border border-blue-100 shadow-sm relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                        <p className="text-gray-700 leading-relaxed">
-                            {answer.aiFeedback}
-                        </p>
+                        <FormattedFeedback content={answer.aiFeedback} />
                     </div>
                 </div>
             )}

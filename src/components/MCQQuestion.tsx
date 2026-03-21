@@ -1,5 +1,6 @@
 import React from 'react';
 import { QuestionAttemptDto } from '@/types';
+import { ImageLightbox } from './ImageLightbox';
 
 /**
  * Props for MCQQuestion component
@@ -64,7 +65,7 @@ export const MCQQuestion: React.FC<MCQQuestionProps> = ({
                     {/* Display Question Image if required */}
                     {question.requiresImageDisplay && question.imageUrl && (
                         <div className="mt-4">
-                            <img
+                            <ImageLightbox
                                 src={getFullImageUrl(question.imageUrl)}
                                 alt="Question Reference"
                                 className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"

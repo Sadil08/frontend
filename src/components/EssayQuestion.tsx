@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QuestionAttemptDto } from '@/types';
 import { ImageUploadExtractor } from './ImageUploadExtractor';
+import { ImageLightbox } from './ImageLightbox';
 
 interface EssayQuestionProps {
     question: QuestionAttemptDto;
@@ -114,7 +115,7 @@ export default function EssayQuestion({
                     {/* Display Question Image if required */}
                     {question.requiresImageDisplay && question.imageUrl && (
                         <div className="mt-4">
-                            <img
+                            <ImageLightbox
                                 src={getFullImageUrl(question.imageUrl)}
                                 alt="Question Reference"
                                 className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
@@ -163,7 +164,7 @@ export default function EssayQuestion({
                         ) : (
                             <div className="flex items-start gap-4 animate-fade-in">
                                 <div className="relative group">
-                                    <img
+                                    <ImageLightbox
                                         src={getFullImageUrl(imageUrl)}
                                         alt="Uploaded Answer"
                                         className="h-24 w-auto rounded border border-gray-300 shadow-sm"

@@ -156,12 +156,6 @@ export default function PaperDetailsPage() {
 
                                 <div className="flex gap-4">
                                     <button
-                                        onClick={() => router.push(getLink(`/papers/${paperId}/attempt`))}
-                                        className="btn-primary flex-1"
-                                    >
-                                        📝 Start New Attempt
-                                    </button>
-                                    <button
                                         onClick={() => router.push(getLink(`/papers/${paperId}/past-attempts`))}
                                         className="btn-outline-primary px-6"
                                     >

@@ -45,6 +45,7 @@ export interface AttemptAnswer {
     marksAvailable: number;
     aiFeedback: string;
     correctAnswerText?: string;
+    correctAnswerImageUrl?: string;
     correctOptionId?: number;
     correctOptionText?: string;
     imageUrl?: string;

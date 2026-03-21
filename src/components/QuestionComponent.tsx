@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Radio, Input, Space } from 'antd';
+import { ImageLightbox } from './ImageLightbox';
 
 interface Option {
     id: number;
@@ -50,7 +51,7 @@ export const QuestionComponent: React.FC<QuestionComponentProps> = ({
                     )}
                     {question.requiresImageDisplay && question.imageUrl && (
                         <div className="mt-4">
-                            <img
+                            <ImageLightbox
                                 src={getFullImageUrl(question.imageUrl)}
                                 alt="Question Reference"
                                 className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
