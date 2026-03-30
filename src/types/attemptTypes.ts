@@ -11,6 +11,7 @@ export interface AttemptHistoryItem {
     id: number;
     attemptNumber: number;
     status: string;
+    startedAt: string;
     completedAt: string;
     timeTakenMinutes: number;
     /** Final weighted score (scaled based on paper's totalMarks) */
@@ -18,6 +19,12 @@ export interface AttemptHistoryItem {
     /** Paper's configured total marks (for percentage calculation) */
     paperTotalMarks?: number;
     overallFeedbackSummary: string;
+    /** Whether AI analysis has completed */
+    analysisCompleted: boolean;
+    /** Error message if analysis failed */
+    analysisError?: string;
+    /** Number of submission/retry attempts */
+    submissionCount?: number;
 }
 
 /**
@@ -52,6 +59,8 @@ export interface AttemptDetails {
     id: number;
     studentId: number;
     paperId: number;
+    originBundleId: number; // Context bundle ID
+    originCustomBundleId?: number; // Context custom bundle ID (optional)
     attemptNumber: number;
     status: string;
     startedAt: string;
@@ -61,8 +70,14 @@ export interface AttemptDetails {
     totalMarks: number;
     /** Paper's configured total marks (for percentage calculation) */
     paperTotalMarks?: number;
+    /** YouTube video URL for paper explanation */
+    videoUrl?: string;
     overallFeedback: string;
     answers: AttemptAnswer[];
+    // Analysis status fields
+    analysisError?: string;
+    analysisCompleted: boolean;
+    submissionCount: number;
 }
 
 /**
@@ -72,6 +87,8 @@ export interface AttemptHistoryProps {
     attempts: AttemptHistoryItem[];
     paperId: number;
     loading?: boolean;
+    bundleId?: number;
+    videoUrl?: string;
     onAttemptSelect?: (attemptId: number) => void;
 }
 
@@ -90,4 +107,15 @@ export interface AttemptQuestionCardProps {
     answer: AttemptAnswer;
     questionNumber: number;
     showFeedback?: boolean;
+}
+
+/**
+ * Basic attempt capability info for a paper
+ */
+export interface AttemptInfo {
+    attemptsMade: number;
+    maxAttempts: number;
+    remainingAttempts: number;
+    canAttempt?: boolean;
+    inProgressAttemptId?: number;
 }

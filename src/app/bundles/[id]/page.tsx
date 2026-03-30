@@ -48,11 +48,11 @@ export default function BundleDetailPage() {
                     const papersData = await paperService.getBundlePapers(bundleId);
                     setPapers(papersData);
 
-                    // Check which papers have been attempted
+                    // Check which papers have been attempted (bundle-scoped)
                     const attempted = new Set<number>();
                     for (const paper of papersData) {
                         try {
-                            const attempts = await paperService.getAttemptHistory(paper.id);
+                            const attempts = await paperService.getAttemptHistory(paper.id, bundleId);
                             if (attempts.length > 0) {
                                 attempted.add(paper.id);
                             }
@@ -198,6 +198,7 @@ export default function BundleDetailPage() {
                                                     attemptsRemaining={paper.maxFreeAttempts}
                                                     hasAttempted={attemptedPapers.has(paper.id)}
                                                     disabled={false}
+                                                    bundleId={bundleId}
                                                 />
                                             ))}
                                         </div>

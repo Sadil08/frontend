@@ -33,6 +33,13 @@ export const MCQQuestion: React.FC<MCQQuestionProps> = ({
     onAnswerChange,
     disabled = false
 }) => {
+    const getFullImageUrl = (url?: string) => {
+        if (!url) return '';
+        if (url.startsWith('http')) return url;
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     return (
         <div className="space-y-6">
             {/* Question Header */}
@@ -46,9 +53,25 @@ export const MCQQuestion: React.FC<MCQQuestionProps> = ({
                             {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
                         </span>
                     </div>
-                    <p className="text-gray-900 font-medium text-lg leading-relaxed">
-                        {question.text}
-                    </p>
+                    {/* Question Text */}
+                    {!question.hideQuestionText && (
+                        <p className="text-gray-900 font-medium text-lg leading-relaxed">
+                            {question.text}
+                        </p>
+                    )}
+
+                    {/* Display Question Image if required */}
+                    {/* Display Question Image if required */}
+                    {question.requiresImageDisplay && question.imageUrl && (
+                        <div className="mt-4">
+                            <img
+                                src={getFullImageUrl(question.imageUrl)}
+                                alt="Question Reference"
+                                className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm"
+                                style={{ maxHeight: '400px' }}
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 

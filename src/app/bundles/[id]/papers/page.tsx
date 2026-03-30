@@ -18,6 +18,7 @@ export default function BundlePapers() {
     const [bundle, setBundle] = useState<PaperBundleDetailDto | null>(null);
     const [attemptedPapers, setAttemptedPapers] = useState<Set<number>>(new Set());
     const [attemptInfo, setAttemptInfo] = useState<Record<number, { remainingAttempts: number; maxAttempts: number }>>({});
+    const [inProgressAttempts, setInProgressAttempts] = useState<Record<number, number>>({}); // paperId -> attemptId
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -28,13 +29,23 @@ export default function BundlePapers() {
                 const papersData = bundleData.papers || [];
                 setPapers(papersData);
 
-                // Check which papers have been attempted
+                // Check which papers have been attempted AND check for in-progress attempts
+                // Use bundle-scoped filtering
+                const bundleIdNum = Number(id);
                 const attempted = new Set<number>();
+                const inProgress: Record<number, number> = {};
+
                 for (const paper of papersData) {
                     try {
-                        const attempts = await paperService.getAttemptHistory(paper.id);
+                        const attempts = await paperService.getAttemptHistory(paper.id, bundleIdNum);
                         if (attempts.length > 0) {
                             attempted.add(paper.id);
+
+                            // Check if latest attempt is IN_PROGRESS
+                            const latestAttempt = attempts[0];
+                            if (latestAttempt.status === 'IN_PROGRESS') {
+                                inProgress[paper.id] = latestAttempt.id;
+                            }
                         }
                     } catch (err) {
                         // If we can't check attempts, assume not attempted
@@ -42,15 +53,16 @@ export default function BundlePapers() {
                     }
                 }
                 setAttemptedPapers(attempted);
+                setInProgressAttempts(inProgress);
 
-                // Fetch attempt info for all papers
+                // Fetch attempt info for all papers (bundle-scoped)
                 if (papersData.length > 0) {
                     try {
                         const token = localStorage.getItem('token')?.trim();
                         if (token) {
                             const paperIds = papersData.map(p => p.id).join(',');
                             const response = await fetch(
-                                `http://localhost:8080/api/papers/attempt-info?paperIds=${paperIds}`,
+                                `http://localhost:8080/api/papers/attempt-info?paperIds=${paperIds}&bundleId=${bundleIdNum}`,
                                 { headers: { Authorization: `Bearer ${token}` } }
                             );
                             if (response.ok) {
@@ -112,6 +124,8 @@ export default function BundlePapers() {
                             attemptsRemaining={attemptInfo[paper.id]?.remainingAttempts ?? paper.maxFreeAttempts}
                             maxAttempts={attemptInfo[paper.id]?.maxAttempts}
                             hasAttempted={attemptedPapers.has(paper.id)}
+                            inProgressAttemptId={inProgressAttempts[paper.id]}
+                            bundleId={Number(id)}
                         />
                     ))}
                 </div>

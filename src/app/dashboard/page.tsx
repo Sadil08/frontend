@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { BundleCard } from '@/components/BundleCard';
+import { CustomBundleCard } from '@/components/CustomBundleCard';
 import { BundleCardSkeleton } from '@/components/LoadingSkeleton';
 import { bundleService } from '@/services/bundleService';
+import { customBundleService, CustomBundleDto } from '@/services/customBundleService';
 import { StudentBundleAccess } from '@/types';
-import { message } from 'antd';
+import { message, Tag } from 'antd';
 
 /**
  * Dashboard Page
@@ -17,23 +19,28 @@ import { message } from 'antd';
 export default function DashboardPage() {
   const router = useRouter();
   const [bundles, setBundles] = useState<StudentBundleAccess[]>([]);
+  const [customBundles, setCustomBundles] = useState<CustomBundleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchBundles();
+    fetchData();
   }, []);
 
-  const fetchBundles = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await bundleService.getMyBundles();
-      setBundles(data);
+      const [standardBundles, myCustomBundles] = await Promise.all([
+        bundleService.getMyBundles(),
+        customBundleService.getMyBundles()
+      ]);
+      setBundles(standardBundles);
+      setCustomBundles(myCustomBundles);
     } catch (err: any) {
-      console.error('Error fetching bundles:', err);
-      setError(err.response?.data?.message || err.message || 'Failed to load bundles');
-      message.error('Failed to load your bundles');
+      console.error('Error fetching dashboard data:', err);
+      setError(err.response?.data?.message || err.message || 'Failed to load dashboard data');
+      message.error('Failed to load your dashboard');
     } finally {
       setLoading(false);
     }
@@ -64,7 +71,7 @@ export default function DashboardPage() {
                   </svg>
                 </div>
                 <p className="text-sm font-medium text-secondary-500 uppercase tracking-wide">Total Bundles</p>
-                <p className="text-3xl font-bold text-secondary-900 mt-1">{bundles.length}</p>
+                <p className="text-3xl font-bold text-secondary-900 mt-1">{bundles.length + customBundles.length}</p>
               </div>
             </div>
 
@@ -78,7 +85,7 @@ export default function DashboardPage() {
                 </div>
                 <p className="text-sm font-medium text-secondary-500 uppercase tracking-wide">Total Papers</p>
                 <p className="text-3xl font-bold text-secondary-900 mt-1">
-                  {bundles.reduce((sum, b) => sum + b.paperCount, 0)}
+                  {bundles.reduce((sum, b) => sum + b.paperCount, 0) + customBundles.reduce((sum, b) => sum + b.paperIds.length, 0)}
                 </p>
               </div>
             </div>
@@ -132,17 +139,17 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <h3 className="text-xl font-bold text-red-800 mb-2">
-                Failed to Load Bundles
+                Failed to Load Dashboard
               </h3>
               <p className="text-red-600 mb-6">{error}</p>
-              <button onClick={fetchBundles} className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md">
+              <button onClick={fetchData} className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-md">
                 Try Again
               </button>
             </div>
           )}
 
           {/* Empty State */}
-          {!loading && !error && bundles.length === 0 && (
+          {!loading && !error && bundles.length === 0 && customBundles.length === 0 && (
             <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
               <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,24 +162,66 @@ export default function DashboardPage() {
               <p className="text-gray-500 mb-8 max-w-md mx-auto text-lg">
                 You haven&apos;t purchased any bundles yet. Browse our collection to find papers that match your learning goals.
               </p>
-              <button
-                onClick={() => router.push('/bundles')}
-                className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl"
-              >
-                Browse Bundles
-              </button>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => router.push('/bundles')}
+                  className="px-8 py-3 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 transition-colors shadow-lg hover:shadow-xl"
+                >
+                  Browse Bundles
+                </button>
+                <button
+                  onClick={() => router.push('/bundles/create-custom')}
+                  className="px-8 py-3 bg-white text-primary-600 border border-primary-600 rounded-lg font-semibold hover:bg-primary-50 transition-colors"
+                >
+                  Create Custom
+                </button>
+              </div>
             </div>
           )}
 
-          {/* Bundles Grid */}
+          {/* Custom Bundles Section */}
+          {!loading && !error && customBundles.length > 0 && (
+            <div className="mb-12">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-secondary-900 flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-purple-600 rounded-full"></span>
+                  My Custom Bundles
+                </h3>
+                <button
+                  onClick={() => router.push('/bundles/create-custom')}
+                  className="text-purple-600 font-medium hover:text-purple-700 text-sm"
+                >
+                  Create Another
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {customBundles.map((bundle) => (
+                  <CustomBundleCard
+                    key={bundle.id}
+                    bundle={bundle}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Standard Bundles Section */}
           {!loading && !error && bundles.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {bundles.map((bundleAccess) => (
-                <BundleCard
-                  key={bundleAccess.accessId}
-                  bundleAccess={bundleAccess}
-                />
-              ))}
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-semibold text-secondary-900 flex items-center gap-2">
+                  <span className="w-1.5 h-6 bg-primary-600 rounded-full"></span>
+                  Purchased Standard Bundles
+                </h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {bundles.map((bundleAccess) => (
+                  <BundleCard
+                    key={bundleAccess.accessId}
+                    bundleAccess={bundleAccess}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>

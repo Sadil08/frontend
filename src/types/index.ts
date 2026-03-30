@@ -22,6 +22,19 @@ export interface UserResponse {
   role: 'STUDENT' | 'ADMIN';
 }
 
+/** Generic Spring Data Page */
+export interface Page<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
 /** Exam Type entity */
 export interface ExamType {
   id: number;
@@ -73,15 +86,18 @@ export interface PaperBundleDetailDto {
 }
 
 /** Paper information */
+/** Paper information */
 export interface PaperDto {
   id: number;
   name: string;
   description: string;
-  bundleId: number;
+  bundleIds: number[]; // Changed from bundleId to bundleIds
   type: 'MCQ' | 'ESSAY' | 'MIXED';
   maxFreeAttempts: number;
   /** Total marks for the paper (used for weighted scoring) */
   totalMarks?: number;
+  /** YouTube video URL for paper explanation */
+  videoUrl?: string;
 }
 
 /**
@@ -107,18 +123,23 @@ export interface QuestionAttemptDto {
   answerTypeHint?: 'short' | 'essay' | 'diagram';
   marks: number;
   options: OptionAttemptDto[];
+  extractionsUsed?: number; // NEW: Number of extractions used for this question in current attempt
 }
 
 /** Paper attempt response with questions */
 export interface PaperAttemptDto {
   id: number;
-  bundleId: number;
+  attemptId?: number; // NEW: For extraction tracking
+  bundleIds: number[]; // Changed from bundleId
+  originBundleId: number; // NEW: Context of the attempt
   name: string;
   description: string;
   type: string;
   maxFreeAttempts: number;
   /** Total marks for the paper (used for weighted scoring) */
   totalMarks?: number;
+  /** YouTube video URL for paper explanation */
+  videoUrl?: string;
   questions: QuestionAttemptDto[];
   // Attempt limit tracking
   attemptsMade?: number;

@@ -6,7 +6,7 @@ import { Card, Descriptions, Spin, Alert, Button, Table, Tag, Modal, Form, Selec
 import { ArrowLeftOutlined, PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { AdminUserDto, UserBundleAccessDto, UserAttemptInfoDto, AdminBundleDto } from '@/types/admin';
-import Header from '@/components/Header';
+
 
 export default function UserDetailPage() {
     const params = useParams();
@@ -116,7 +116,6 @@ export default function UserDetailPage() {
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50">
-                <Header />
                 <div className="max-w-7xl mx-auto p-6 flex justify-center items-center" style={{ minHeight: '60vh' }}>
                     <Spin size="large" />
                 </div>
@@ -127,7 +126,6 @@ export default function UserDetailPage() {
     if (error || !user) {
         return (
             <div className="min-h-screen bg-gray-50">
-                <Header />
                 <div className="max-w-7xl mx-auto p-6">
                     <Alert
                         message="Error"
@@ -229,7 +227,6 @@ export default function UserDetailPage() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Header />
             <div className="max-w-7xl mx-auto p-6">
                 <Button
                     icon={<ArrowLeftOutlined />}
