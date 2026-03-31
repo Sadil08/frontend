@@ -243,10 +243,10 @@ export const FullPaper: React.FC<FullPaperProps> = ({
     };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            {/* Paper Header */}
-            <div className="bg-white rounded-xl shadow-card border border-gray-200 mb-8 sticky top-4 z-20 transition-all duration-300">
-                <div className="p-6 border-b border-gray-100">
+        <div className="max-w-5xl mx-auto">
+            {/* Paper Header - Static (scrolls away naturally) */}
+            <div className="bg-white rounded-xl shadow-card border border-gray-200 mb-4">
+                <div className="p-6">
                     <div className="flex items-start justify-between gap-4 mb-4">
                         <div className="flex-1">
                             <h1 className="text-2xl md:text-3xl font-bold text-secondary-900 mb-2 leading-tight">
@@ -261,7 +261,7 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                     </div>
 
                     {/* Paper Info */}
-                    <div className="flex items-center gap-4 text-sm text-secondary-500 mb-4">
+                    <div className="flex items-center gap-4 text-sm text-secondary-500">
                         <span className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full border border-gray-200">
                             <svg className="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -275,23 +275,25 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                             <span className="font-medium">{paperData.type}</span>
                         </span>
                     </div>
+                </div>
+            </div>
 
-                    {/* Progress Indicator */}
-                    <div>
-                        <div className="flex items-center justify-between text-sm mb-2">
-                            <span className="font-semibold text-secondary-700">
-                                Progress: <span className="text-primary-600">{answeredQuestions}</span>/{totalQuestions} answered
-                            </span>
-                            <span className="text-secondary-600 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs">
-                                {progressPercentage.toFixed(0)}%
-                            </span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                            <div
-                                className="bg-primary-600 h-2.5 rounded-full transition-all duration-500 ease-out shadow-sm"
-                                style={{ width: `${progressPercentage}%` }}
-                            />
-                        </div>
+            {/* Sticky Progress Bar - Compact, always visible */}
+            <div className="sticky top-0 z-20 mb-6">
+                <div className="bg-white/95 backdrop-blur-md rounded-lg shadow-sm border border-gray-200 px-4 py-2.5">
+                    <div className="flex items-center justify-between text-sm mb-1.5">
+                        <span className="font-semibold text-secondary-700 text-xs sm:text-sm">
+                            Progress: <span className="text-primary-600">{answeredQuestions}</span>/{totalQuestions} answered
+                        </span>
+                        <span className="text-secondary-600 font-medium bg-gray-100 px-2 py-0.5 rounded text-xs">
+                            {progressPercentage.toFixed(0)}%
+                        </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div
+                            className="bg-primary-600 h-2 rounded-full transition-all duration-500 ease-out shadow-sm"
+                            style={{ width: `${progressPercentage}%` }}
+                        />
                     </div>
                 </div>
             </div>
@@ -323,23 +325,41 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                 ))}
             </div>
 
-            {/* Submit Button */}
-            <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-200 p-6 mt-12 -mx-4 sm:mx-0 sm:rounded-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
-                <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Submit Footer with Progress */}
+            <div className="sticky bottom-0 bg-white/95 backdrop-blur-md border-t border-gray-200 px-4 sm:px-6 py-3 mt-12 -mx-4 sm:mx-0 sm:rounded-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-20">
+                {/* Progress Bar in Footer */}
+                <div className="mb-2.5">
+                    <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-semibold text-secondary-700">
+                            <span className="text-primary-600">{answeredQuestions}</span>/{totalQuestions} answered
+                        </span>
+                        <span className="text-secondary-600 font-medium">
+                            {progressPercentage.toFixed(0)}%
+                        </span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                        <div
+                            className="bg-primary-600 h-1.5 rounded-full transition-all duration-500 ease-out"
+                            style={{ width: `${progressPercentage}%` }}
+                        />
+                    </div>
+                </div>
+                {/* Status + Submit */}
+                <div className="flex items-center justify-between gap-3">
                     <div className="text-sm text-gray-600 font-medium">
                         {answeredQuestions === totalQuestions ? (
-                            <span className="text-green-600 flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg border border-green-100">
-                                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <span className="text-green-600 flex items-center gap-1.5 text-xs sm:text-sm">
+                                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
-                                All questions answered!
+                                All answered!
                             </span>
                         ) : (
-                            <span className="flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-lg border border-amber-100">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span className="flex items-center gap-1.5 text-amber-700 text-xs sm:text-sm">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                {totalQuestions - answeredQuestions} question{totalQuestions - answeredQuestions !== 1 ? 's' : ''} remaining
+                                {totalQuestions - answeredQuestions} remaining
                             </span>
                         )}
                     </div>
@@ -347,7 +367,7 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                         onClick={handleSubmitClick}
                         disabled={isSubmitting}
                         className={`
-                            px-8 py-3 text-lg font-bold rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5
+                            px-6 py-2.5 text-base font-bold rounded-xl shadow-lg transition-all duration-300 transform hover:-translate-y-0.5
                             ${isSubmitting
                                 ? 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
                                 : 'bg-primary-600 text-white hover:bg-primary-700 hover:shadow-primary-600/30'
@@ -356,7 +376,7 @@ export const FullPaper: React.FC<FullPaperProps> = ({
                     >
                         {isSubmitting ? (
                             <span className="flex items-center gap-2">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
