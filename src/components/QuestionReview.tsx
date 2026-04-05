@@ -137,108 +137,70 @@ const QuestionReviewComponent: React.FC<QuestionReviewProps> = ({ answer, questi
                 </div>
             </div>
 
-            {/* Answer Comparison Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-                {/* Student's Answer */}
-                <div className="order-2 lg:order-1">
-                    <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-2">
-                        <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        Your Answer
-                    </h4>
-                    <div className="bg-orange-50 border-l-4 border-orange-400 p-3 sm:p-4 rounded-lg min-h-[100px] hover:bg-orange-100 transition-colors duration-200 space-y-4">
-                        {/* Display Handwritten Image if available */}
-                        {answer.imageUrl && (
-                            <div className="mb-2">
-                                <span className="text-xs font-semibold text-orange-700 block mb-1 font-bold">Uploaded Handwriting:</span>
-                                <ImageLightbox
-                                    src={getFullImageUrl(answer.imageUrl)}
-                                    alt="Handwritten Answer"
-                                    className="max-w-full h-auto rounded border border-orange-200 shadow-sm hover:shadow-md transition-all"
-                                    style={{ maxHeight: '400px' }}
-                                    onError={(e) => {
-                                        console.error('Failed to load student answer image:', answer.imageUrl);
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            </div>
-                        )}
+            {/* Student's Answer */}
+            <div className="mb-6">
+                <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Your Answer
+                </h4>
+                <div className="bg-orange-50 border-l-4 border-orange-400 p-3 sm:p-4 rounded-lg min-h-[100px] hover:bg-orange-100 transition-colors duration-200 space-y-4">
+                    {/* Display Handwritten Image if available */}
+                    {answer.imageUrl && (
+                        <div className="mb-2">
+                            <span className="text-xs font-semibold text-orange-700 block mb-1 font-bold">Uploaded Handwriting:</span>
+                            <ImageLightbox
+                                src={getFullImageUrl(answer.imageUrl)}
+                                alt="Handwritten Answer"
+                                className="max-w-full h-auto rounded border border-orange-200 shadow-sm hover:shadow-md transition-all"
+                                style={{ maxHeight: '400px' }}
+                                onError={(e) => {
+                                    console.error('Failed to load student answer image:', answer.imageUrl);
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    )}
 
-                        {/* Display Typed Text or Extracted Text */}
-                        {(answer.answerText || answer.extractedText) ? (
-                            <div className="space-y-2">
-                                {answer.answerText && (
-                                    <div>
-                                        {answer.imageUrl && <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-1">Typed Answer:</span>}
-                                        <p className="text-gray-900 leading-relaxed text-sm sm:text-base whitespace-pre-wrap font-medium">
-                                            {answer.answerText}
-                                        </p>
-                                    </div>
-                                )}
-                                {answer.extractedText && !answer.answerText && (
-                                    <div>
-                                        <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-1 italic">Extracted from Handwriting:</span>
-                                        <p className="text-gray-800 leading-relaxed text-sm sm:text-base font-medium">
-                                            {answer.extractedText}
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        ) : null}
-
-                        {/* Fallback for no answer */}
-                        {(!answer.answerText && !answer.imageUrl && !answer.extractedText && !answer.selectedOptionId) && (
-                            <div className="flex items-center gap-2 text-gray-400 italic py-2">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                                <span className="text-sm">No answer provided or detected.</span>
-                            </div>
-                        )}
-
-                        {/* MCQ Selection */}
-                        {answer.selectedOptionId && (
-                            <p className="text-gray-900 font-medium bg-white/50 p-2 rounded border border-orange-100 italic">
-                                Selected Option: <span className="text-orange-700 font-bold underline decoration-orange-300">{answer.selectedOptionText || `ID ${answer.selectedOptionId}`}</span>
-                            </p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Correct Answer */}
-                <div className="order-1 lg:order-2">
-                    <h4 className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2 flex items-center gap-2">
-                        <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        Correct Answer
-                    </h4>
-                    <div className="bg-green-50 border-l-4 border-green-500 p-3 sm:p-4 rounded-lg min-h-[100px] hover:bg-green-100 transition-colors duration-200">
-                        {/* Model Answer Image */}
-                        {answer.correctAnswerImageUrl && (
-                            <div className="mb-3">
-                                <span className="text-xs font-semibold text-green-700 block mb-1 uppercase tracking-tight">Model Answer Image:</span>
-                                <ImageLightbox
-                                    src={getFullImageUrl(answer.correctAnswerImageUrl)}
-                                    alt="Model Answer"
-                                    className="max-w-full h-auto rounded border border-green-200 shadow-sm hover:shadow-md transition-all"
-                                    style={{ maxHeight: '400px' }}
-                                    onError={(e) => {
-                                        console.error('Failed to load model answer image:', answer.correctAnswerImageUrl);
-                                        e.currentTarget.style.display = 'none';
-                                    }}
-                                />
-                            </div>
-                        )}
-                        <p className="text-gray-900 leading-relaxed font-medium text-sm sm:text-base">
-                            {answer.correctAnswerText || answer.correctOptionText || (
-                                answer.correctOptionId ?
-                                    `Correct Option ID: ${answer.correctOptionId}` :
-                                    <span className="text-gray-400 italic font-normal">Answer details not available</span>
+                    {/* Display Typed Text or Extracted Text */}
+                    {(answer.answerText || answer.extractedText) ? (
+                        <div className="space-y-2">
+                            {answer.answerText && (
+                                <div>
+                                    {answer.imageUrl && <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-1">Typed Answer:</span>}
+                                    <p className="text-gray-900 leading-relaxed text-sm sm:text-base whitespace-pre-wrap font-medium">
+                                        {answer.answerText}
+                                    </p>
+                                </div>
                             )}
+                            {answer.extractedText && !answer.answerText && (
+                                <div>
+                                    <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider block mb-1 italic">Extracted from Handwriting:</span>
+                                    <p className="text-gray-800 leading-relaxed text-sm sm:text-base font-medium">
+                                        {answer.extractedText}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    ) : null}
+
+                    {/* Fallback for no answer */}
+                    {(!answer.answerText && !answer.imageUrl && !answer.extractedText && !answer.selectedOptionId) && (
+                        <div className="flex items-center gap-2 text-gray-400 italic py-2">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <span className="text-sm">No answer provided or detected.</span>
+                        </div>
+                    )}
+
+                    {/* MCQ Selection */}
+                    {answer.selectedOptionId && (
+                        <p className="text-gray-900 font-medium bg-white/50 p-2 rounded border border-orange-100 italic">
+                            Selected Option: <span className="text-orange-700 font-bold underline decoration-orange-300">{answer.selectedOptionText || `ID ${answer.selectedOptionId}`}</span>
                         </p>
-                    </div>
+                    )}
                 </div>
             </div>
 
