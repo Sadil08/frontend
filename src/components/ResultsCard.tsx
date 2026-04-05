@@ -172,9 +172,9 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({
                             {answer.extractedText && !answer.answerText && (
                                 <div>
                                     <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight italic block mb-1">Extracted content:</span>
-                                    <p className="text-gray-800 leading-relaxed italic">
-                                        {answer.extractedText}
-                                    </p>
+                                    <div className="text-gray-800 leading-relaxed">
+                                        <FormattedFeedback content={answer.extractedText} />
+                                    </div>
                                 </div>
                             )}
                         </div>
