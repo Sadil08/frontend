@@ -5,6 +5,8 @@ import { Card, Statistic, message } from 'antd';
 import { DollarCircleOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import axios from 'axios';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
 export const RevenueCard: React.FC = () => {
     const [revenue, setRevenue] = useState<number>(0);
     const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ export const RevenueCard: React.FC = () => {
                 const token = localStorage.getItem('token');
                 if (!token) return;
 
-                const response = await axios.get('http://localhost:8080/api/admin/dashboard/revenue', {
+                const response = await axios.get(`${API_URL}/api/admin/dashboard/revenue`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 

@@ -3,14 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, Button, Form, Input, Select, InputNumber, message, Modal, Tag, List, Switch, FloatButton, Badge as AntBadge, Alert, Space } from 'antd';
-import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, DatabaseOutlined, LoadingOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlusOutlined, EditOutlined, DeleteOutlined, DatabaseOutlined, LoadingOutlined, FilePdfOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { extractBatch } from '@/services/batchExtractionService';
 import { AdminPaperDto, QuestionCreateDto, AdminQuestionDto } from '@/types/admin';
-import { LessonDto } from '@/types';
+import { LessonDto, SubjectDto } from '@/types';
 
 import { MarksSummary } from '@/components/admin/MarksSummary';
 import { ImageUploadExtractor } from '@/components/ImageUploadExtractor';
+import { PdfImportModal } from '@/components/admin/PdfImportModal';
 
 const BooleanButton = ({ value, onChange }: { value?: boolean; onChange?: (val: boolean) => void }) => (
     <Button
@@ -27,7 +28,9 @@ export default function PaperEditPage() {
     const paperId = Number(params.id);
     const [paper, setPaper] = useState<AdminPaperDto | null>(null);
     const [lessons, setLessons] = useState<LessonDto[]>([]);
+    const [subjects, setSubjects] = useState<SubjectDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isPdfImportOpen, setIsPdfImportOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState<AdminQuestionDto | null>(null);
     const [form] = Form.useForm();
@@ -47,12 +50,14 @@ export default function PaperEditPage() {
     const fetchPaper = async () => {
         setLoading(true);
         try {
-            const [paperData, lessonsData] = await Promise.all([
+            const [paperData, lessonsData, subjectsData] = await Promise.all([
                 adminService.getPaper(paperId),
-                adminService.getLessons()
+                adminService.getLessons(),
+                adminService.getSubjects()
             ]);
             setPaper(paperData);
             setLessons(lessonsData);
+            setSubjects(subjectsData);
         } catch (error) {
             console.error('Failed to load data:', error);
             message.error('Failed to load paper');
@@ -388,6 +393,13 @@ export default function PaperEditPage() {
                                     Process Batch ({batchQueue.size + pendingQuestions.length})
                                 </Button>
                             )}
+                            <Button
+                                icon={<FilePdfOutlined />}
+                                onClick={() => setIsPdfImportOpen(true)}
+                                className="border-red-300 text-red-600 hover:border-red-500"
+                            >
+                                Import from PDF
+                            </Button>
                             <Button
                                 type="primary"
                                 icon={<PlusOutlined />}
@@ -733,6 +745,20 @@ export default function PaperEditPage() {
                         style={{ right: 94, bottom: 24, width: 64, height: 64 }}
                     />
                 )}
+
+                {/* PDF Import Modal */}
+                <PdfImportModal
+                    open={isPdfImportOpen}
+                    onClose={() => setIsPdfImportOpen(false)}
+                    onImportComplete={() => {
+                        setIsPdfImportOpen(false);
+                        fetchPaper();
+                    }}
+                    paperId={paperId}
+                    paperType={paper.type}
+                    subjects={subjects}
+                    lessons={lessons}
+                />
             </div>
         </div>
     );

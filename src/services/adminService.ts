@@ -353,5 +353,65 @@ export const adminService = {
      */
     deleteExamType: async (id: number): Promise<void> => {
         await apiClient.delete(`/api/exam-types/${id}`);
+    },
+
+    // ============================================================================
+    // PDF Import (1 endpoint)
+    // ============================================================================
+
+    /**
+     * Import questions from PDF files using AI extraction
+     * POST /api/questions/import-from-pdf
+     * Returns parsed questions for admin review (does NOT save)
+     */
+    importFromPdf: async (data: {
+        questionPaper: File;
+        answerPaper?: File;
+        subject?: string;
+        lesson?: string;
+        paperType?: string;
+        defaultMarks?: number;
+    }): Promise<{
+        questions: Array<{
+            questionNumber: number;
+            text: string;
+            type: 'MCQ' | 'ESSAY';
+            marks: number | null;
+            options: Array<{ text: string; isCorrect: boolean }> | null;
+            modelAnswer: string | null;
+            startPage: number | null;
+            endPage: number | null;
+        }>;
+        totalQuestions: number;
+        paperTitle: string | null;
+        questionImages: string[] | null;  // Supabase URLs, one per question (stitched)
+    }> => {
+        const formData = new FormData();
+        formData.append('questionPaper', data.questionPaper);
+        if (data.answerPaper) {
+            formData.append('answerPaper', data.answerPaper);
+        }
+        if (data.subject) formData.append('subject', data.subject);
+        if (data.lesson) formData.append('lesson', data.lesson);
+        if (data.paperType) formData.append('paperType', data.paperType);
+        if (data.defaultMarks) formData.append('defaultMarks', data.defaultMarks.toString());
+
+        const token = localStorage.getItem('token');
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+
+        const response = await fetch(`${API_URL}/api/questions/import-from-pdf`, {
+            method: 'POST',
+            headers: {
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.error || 'PDF import failed');
+        }
+
+        return response.json();
     }
 };
