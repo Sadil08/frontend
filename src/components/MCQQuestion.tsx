@@ -77,76 +77,115 @@ export const MCQQuestion: React.FC<MCQQuestionProps> = ({
             </div>
 
             {/* Options */}
-            <div className="space-y-3 mt-4">
-                {question.options.map((option, index) => {
-                    const isSelected = selectedOptionId === option.id;
-                    const optionLetter = String.fromCharCode(65 + index); // A, B, C, D...
+            {/* When a question image is shown, the options are already visible in the image.
+                Use a compact grid of letter-only buttons. Otherwise show full text list. */}
+            {question.requiresImageDisplay && question.imageUrl ? (
+                <div className="mt-4">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Select your answer:</p>
+                    <div className="flex flex-wrap gap-3">
+                        {question.options.map((option, index) => {
+                            const isSelected = selectedOptionId === option.id;
+                            const optionLetter = String.fromCharCode(65 + index);
+                            return (
+                                <label
+                                    key={option.id}
+                                    className={`
+                                        flex items-center justify-center w-14 h-14 rounded-xl border-2 cursor-pointer
+                                        font-bold text-lg transition-all duration-200 select-none
+                                        ${isSelected
+                                            ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
+                                            : 'border-gray-200 bg-white text-gray-600 hover:border-primary-300 hover:bg-gray-50'
+                                        }
+                                        ${disabled ? 'opacity-60 cursor-not-allowed' : ''}
+                                    `}
+                                >
+                                    <input
+                                        type="radio"
+                                        name={`question-${question.id}`}
+                                        value={option.id}
+                                        checked={isSelected}
+                                        onChange={() => !disabled && onAnswerChange(question.id, option.id)}
+                                        disabled={disabled}
+                                        className="sr-only"
+                                    />
+                                    {optionLetter}
+                                </label>
+                            );
+                        })}
+                    </div>
+                </div>
+            ) : (
+                <div className="space-y-3 mt-4">
+                    {question.options.map((option, index) => {
+                        const isSelected = selectedOptionId === option.id;
+                        const optionLetter = String.fromCharCode(65 + index);
 
-                    return (
-                        <label
-                            key={option.id}
-                            className={`
-                relative flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group
-                ${isSelected
-                                    ? 'border-primary-500 bg-primary-50 shadow-sm'
-                                    : 'border-gray-200 bg-white hover:border-primary-200 hover:bg-gray-50'
-                                }
-                ${disabled ? 'opacity-60 cursor-not-allowed hover:border-gray-200 hover:bg-white' : ''}
-              `}
-                        >
-                            <input
-                                type="radio"
-                                name={`question-${question.id}`}
-                                value={option.id}
-                                checked={isSelected}
-                                onChange={() => !disabled && onAnswerChange(question.id, option.id)}
-                                disabled={disabled}
-                                className="sr-only"
-                            />
+                        return (
+                            <label
+                                key={option.id}
+                                className={`
+                    relative flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 group
+                    ${isSelected
+                                        ? 'border-primary-500 bg-primary-50 shadow-sm'
+                                        : 'border-gray-200 bg-white hover:border-primary-200 hover:bg-gray-50'
+                                    }
+                    ${disabled ? 'opacity-60 cursor-not-allowed hover:border-gray-200 hover:bg-white' : ''}
+                  `}
+                            >
+                                <input
+                                    type="radio"
+                                    name={`question-${question.id}`}
+                                    value={option.id}
+                                    checked={isSelected}
+                                    onChange={() => !disabled && onAnswerChange(question.id, option.id)}
+                                    disabled={disabled}
+                                    className="sr-only"
+                                />
 
-                            {/* Custom Radio Button */}
-                            <div className={`
-                flex-shrink-0 w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all duration-200
-                ${isSelected
-                                    ? 'border-primary-600 bg-primary-600'
-                                    : 'border-gray-300 bg-white group-hover:border-primary-400'
-                                }
-              `}>
+                                {/* Custom Radio Button */}
+                                <div className={`
+                    flex-shrink-0 w-6 h-6 rounded-full border-2 mr-4 flex items-center justify-center transition-all duration-200
+                    ${isSelected
+                                        ? 'border-primary-600 bg-primary-600'
+                                        : 'border-gray-300 bg-white group-hover:border-primary-400'
+                                    }
+                  `}>
+                                    {isSelected && (
+                                        <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />
+                                    )}
+                                </div>
+
+                                {/* Option Content */}
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3">
+                                        <span className={`
+                        font-bold text-sm w-6 h-6 flex items-center justify-center rounded-md flex-shrink-0
+                        ${isSelected ? 'bg-primary-200 text-primary-800' : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'}
+                      `}>
+                                            {optionLetter}
+                                        </span>
+                                        <span className={`
+                        text-base leading-snug
+                        ${isSelected ? 'text-primary-900 font-medium' : 'text-gray-700'}
+                      `}>
+                                            {option.text}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Selected Indicator */}
                                 {isSelected && (
-                                    <div className="w-2.5 h-2.5 rounded-full bg-white shadow-sm" />
+                                    <div className="flex-shrink-0 ml-3 animate-fade-in">
+                                        <svg className="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
                                 )}
-                            </div>
-
-                            {/* Option Content */}
-                            <div className="flex-1">
-                                <div className="flex items-center gap-3">
-                                    <span className={`
-                    font-bold text-sm w-6 h-6 flex items-center justify-center rounded-md
-                    ${isSelected ? 'bg-primary-200 text-primary-800' : 'bg-gray-100 text-gray-500 group-hover:bg-gray-200'}
-                  `}>
-                                        {optionLetter}
-                                    </span>
-                                    <span className={`
-                    text-base leading-snug
-                    ${isSelected ? 'text-primary-900 font-medium' : 'text-gray-700'}
-                  `}>
-                                        {option.text}
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Selected Indicator */}
-                            {isSelected && (
-                                <div className="flex-shrink-0 ml-3 animate-fade-in">
-                                    <svg className="w-6 h-6 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                </div>
-                            )}
-                        </label>
-                    );
-                })}
-            </div>
+                            </label>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };
