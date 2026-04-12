@@ -47,6 +47,39 @@ export default function PaperEditPage() {
         tempId: string
     }>>([]);
 
+    const [isHidingAllQuestionText, setIsHidingAllQuestionText] = useState(false);
+
+    const handleGlobalHideQuestionText = async (hide: boolean) => {
+        if (!paper?.questions?.length) return;
+        setIsHidingAllQuestionText(true);
+        try {
+            await Promise.all(
+                paper.questions.map((q) =>
+                    adminService.updateQuestion(paperId, q.id, {
+                        text: q.text,
+                        type: q.type,
+                        correctAnswerText: q.correctAnswerText,
+                        marks: q.marks,
+                        lessonId: q.lessonId ?? null,
+                        options: q.options ?? [],
+                        imageUrl: q.imageUrl,
+                        requiresImageDisplay: q.requiresImageDisplay,
+                        hideQuestionText: hide,
+                        allowImageAnswer: q.allowImageAnswer,
+                        answerTypeHint: q.answerTypeHint,
+                        modelAnswerImageUrl: q.modelAnswerImageUrl,
+                    })
+                )
+            );
+            message.success(`Question text ${hide ? 'hidden' : 'shown'} for all questions`);
+            fetchPaper();
+        } catch {
+            message.error('Failed to update some questions');
+        } finally {
+            setIsHidingAllQuestionText(false);
+        }
+    };
+
     const fetchPaper = async () => {
         setLoading(true);
         try {
@@ -383,6 +416,18 @@ export default function PaperEditPage() {
                     title="Questions"
                     extra={
                         <Space>
+                            {paper?.questions?.length > 0 && (
+                                <Space>
+                                    <span className="text-sm text-gray-600">Hide All Question Text:</span>
+                                    <Switch
+                                        checked={paper.questions.every(q => q.hideQuestionText)}
+                                        onChange={handleGlobalHideQuestionText}
+                                        loading={isHidingAllQuestionText}
+                                        checkedChildren="Yes"
+                                        unCheckedChildren="No"
+                                    />
+                                </Space>
+                            )}
                             {(batchQueue.size > 0 || pendingQuestions.length > 0) && (
                                 <Button
                                     icon={<DatabaseOutlined />}
