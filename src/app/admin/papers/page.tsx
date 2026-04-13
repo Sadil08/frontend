@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Button, Modal, Form, Input, Select, InputNumber, message, Tag, Statistic } from 'antd';
-import { PlusOutlined, EditOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, CloudUploadOutlined } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { AdminPaperDto, PaperCreateDto, AdminBundleDto } from '@/types/admin';
 import { ListTable } from '@/components/ListTable';
@@ -232,15 +232,25 @@ export default function PaperManagementPage() {
                         <h1 className="text-3xl font-bold text-secondary-900">Paper Management</h1>
                         <p className="text-secondary-600 mt-1 text-lg">Manage papers and view statistics</p>
                     </div>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleAdd}
-                        size="large"
-                        className="bg-primary-600 hover:bg-primary-700 border-none shadow-md"
-                    >
-                        Add Paper
-                    </Button>
+                    <div className="flex items-center gap-3">
+                        <Button
+                            icon={<CloudUploadOutlined />}
+                            onClick={() => router.push('/admin/batch-import')}
+                            size="large"
+                            className="border-indigo-300 text-indigo-600 hover:border-indigo-500 hover:text-indigo-700"
+                        >
+                            Batch Import (AI)
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleAdd}
+                            size="large"
+                            className="bg-primary-600 hover:bg-primary-700 border-none shadow-md"
+                        >
+                            Add Paper
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Summary Stats */}

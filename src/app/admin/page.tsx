@@ -8,7 +8,8 @@ import {
     FileTextOutlined,
     QuestionCircleOutlined,
     RocketOutlined,
-    DollarOutlined
+    DollarOutlined,
+    CloudUploadOutlined
 } from '@ant-design/icons';
 import { adminService } from '@/services/adminService';
 import { SystemStatsDto } from '@/types/admin';
@@ -174,6 +175,19 @@ export default function AdminDashboard() {
                                     <div className="text-sm text-secondary-500">Add questions and manage papers</div>
                                 </div>
                                 <div className="ml-auto text-gray-400 group-hover:text-purple-600">→</div>
+                            </Link>
+                            <Link href="/admin/batch-import" className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors group border border-dashed border-indigo-200 bg-indigo-50/40">
+                                <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mr-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                    <CloudUploadOutlined />
+                                </div>
+                                <div>
+                                    <div className="font-semibold text-secondary-900 flex items-center gap-2">
+                                        Batch Import Papers
+                                        <span className="text-xs px-1.5 py-0.5 bg-indigo-100 text-indigo-700 rounded font-bold">AI</span>
+                                    </div>
+                                    <div className="text-sm text-secondary-500">Upload PDF pairs — fully automated</div>
+                                </div>
+                                <div className="ml-auto text-gray-400 group-hover:text-indigo-600">→</div>
                             </Link>
                         </div>
                     </div>
